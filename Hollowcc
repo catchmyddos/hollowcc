@@ -21,11 +21,13 @@ shared.HollowCC_Config = {
         ['Title'] = 'Hollow.cc',
         ['TitleColor'] = Color3.fromRGB(255, 140, 0), -- Orange
         ['TextColor'] = Color3.fromRGB(255, 255, 255),
+        ['BackgroundEnabled'] = false, -- NO BACKGROUND
         ['BackgroundColor'] = Color3.fromRGB(0, 0, 0),
-        ['BackgroundTransparency'] = 0.5,
-        ['Position'] = UDim2.new(0, 10, 0, 10), -- Top left by default, change this to move it
-        ['ShowToggles'] = true, -- Show ON/OFF status
-        ['Enabled'] = true -- Show UI at all
+        ['BackgroundTransparency'] = 1, -- Fully transparent
+        ['Position'] = UDim2.new(1, -210, 0, 10), -- TOP RIGHT
+        ['ShowToggles'] = true,
+        ['Enabled'] = true,
+        ['TextBold'] = true -- BOLD TEXT
     },
     
     ['Hotkeys'] = { 
@@ -38,8 +40,8 @@ shared.HollowCC_Config = {
         ['Silent Aim Target'] = 'Q', 
         ['Hit Part Override'] = 'F', 
         ['Inventory Sorter'] = 'R',
-        ['ESP'] = 'P', -- NEW: ESP Toggle
-        ['Camlock'] = 'V' -- NEW: Camlock Toggle
+        ['ESP'] = 'P',
+        ['Camlock'] = 'V'
     },
 
     ['Conditions'] = {
@@ -53,13 +55,13 @@ shared.HollowCC_Config = {
         ['Chat Focused'] = true,
         ['Shift Locked'] = false,
         ['Third Person'] = false,
-        ['First Person Camlock'] = true, -- Camlock works in first person
-        ['Third Person Camlock'] = false, -- Camlock disabled in third person
-        ['ShiftLock Camlock'] = true -- Camlock works in shift lock
+        ['First Person Camlock'] = true,
+        ['Third Person Camlock'] = false,
+        ['ShiftLock Camlock'] = true
     },
 
     ['Silent Aim'] = { 
-        ['Enabled'] = false, -- Default off
+        ['Enabled'] = false,
         ['Selection'] = 'Automatic',
         ['Max Distance'] = math.huge,
         ['YAxis'] = false,
@@ -89,7 +91,7 @@ shared.HollowCC_Config = {
     },
     
     ['Aim Bot'] = {
-        ['Enabled'] = false, -- Default off
+        ['Enabled'] = false,
         ['Hit Part'] = 'Head',
         ['Closest Point'] = { ['Mode'] = 'Advanced', ['Scale'] = 0.93 },
         ['Stickiness'] = 1,
@@ -100,16 +102,17 @@ shared.HollowCC_Config = {
         ['FOV'] = { ['Enabled'] = true, ['Size'] = 300 }
     },
 
-    ['Camlock'] = { -- NEW: Separate camlock settings
+    ['Camlock'] = {
         ['Enabled'] = false,
         ['Hit Part'] = 'Head',
-        ['Smoothness'] = 0.1,
+        ['Smoothness'] = 0.08, -- LOWER = SMOOTHER (0.01-0.2 range)
         ['Prediction'] = { ['Enabled'] = true, ['X'] = 0.13, ['Y'] = 0.13, ['Z'] = 0.13 },
-        ['FOV'] = { ['Enabled'] = true, ['Size'] = 200 }
+        ['FOV'] = { ['Enabled'] = true, ['Size'] = 200 },
+        ['ShakeReduction'] = true -- Reduces shake near players
     },
 
     ['Trigger Bot'] = {
-        ['Enabled'] = false, 
+        ['Enabled'] = false,
         ['Selection'] = 'Automatic',
         ['Max Distance'] = 250,
         ['Radius'] = math.huge,
@@ -119,7 +122,7 @@ shared.HollowCC_Config = {
         ['FOV'] = { ['Visible'] = false, ['X'] = 3.3, ['Y'] = 7, ['Z'] = 3.6 },
     },
     
-    ['ESP'] = { -- NEW: ESP Settings
+    ['ESP'] = {
         ['Enabled'] = false,
         ['Boxes'] = true,
         ['Names'] = true,
@@ -128,8 +131,9 @@ shared.HollowCC_Config = {
         ['Tracers'] = false,
         ['Team Check'] = false,
         ['Max Distance'] = 1000,
-        ['Box Color'] = Color3.fromRGB(255, 255, 255),
-        ['Tracer Color'] = Color3.fromRGB(255, 255, 255)
+        ['Box Color'] = Color3.fromRGB(255, 140, 0), -- ORANGE
+        ['Tracer Color'] = Color3.fromRGB(255, 140, 0), -- ORANGE
+        ['TextColor'] = Color3.fromRGB(255, 140, 0) -- ORANGE
     },
     
     ['Gun Modifications'] = {
@@ -144,7 +148,11 @@ shared.HollowCC_Config = {
     ['Player Modifications'] = {
         ['No Jump Cooldown'] = false,
         ['No Tripping'] = false,
-        ['Walk Speed'] = { ['Enabled'] = false, ['Speed'] = 2, ['Glide'] = false },
+        ['Walk Speed'] = { 
+            ['Enabled'] = false, 
+            ['Speed'] = 23, -- DEFAULT WALKSPEED VALUE
+            ['Toggle'] = true -- Toggle mode
+        },
     },    
 
     ['Game Utilities'] = {
@@ -185,7 +193,9 @@ local Script = {
         IsDoubleTapping = false,
         TriggerState = false,
         IsOverriding = false,
-        ESPObjects = {}
+        ESPObjects = {},
+        LastCamlockUpdate = 0,
+        CamlockSmoothing = Vector2.new(0, 0)
     },
     Visuals = {}
 }
@@ -259,33 +269,21 @@ local function CreateHollowUI()
     MainFrame.Visible = shared.HollowCC_Config['UI']['Enabled']
     MainFrame.Parent = ScreenGui
     
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 4)
-    UICorner.Parent = MainFrame
-    
     local Title = Instance.new("TextLabel")
     Title.Name = "Title"
-    Title.Size = UDim2.new(1, 0, 0, 20)
+    Title.Size = UDim2.new(1, 0, 0, 22)
     Title.Position = UDim2.new(0, 0, 0, 5)
     Title.BackgroundTransparency = 1
     Title.Text = shared.HollowCC_Config['UI']['Title']
     Title.TextColor3 = shared.HollowCC_Config['UI']['TitleColor']
-    Title.TextSize = 16
-    Title.Font = Enum.Font.SourceSansBold
-    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.TextSize = 18
+    Title.Font = shared.HollowCC_Config['UI']['TextBold'] and Enum.Font.SourceSansBold or Enum.Font.SourceSansSemibold
+    Title.TextXAlignment = Enum.TextXAlignment.Right
     Title.Parent = MainFrame
     
     local UIPadding = Instance.new("UIPadding")
-    UIPadding.PaddingLeft = UDim.new(0, 8)
+    UIPadding.PaddingRight = UDim.new(0, 10)
     UIPadding.Parent = Title
-    
-    local Divider = Instance.new("Frame")
-    Divider.Name = "Divider"
-    Divider.Size = UDim2.new(0.9, 0, 0, 1)
-    Divider.Position = UDim2.new(0.05, 0, 0, 26)
-    Divider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    Divider.BorderSizePixel = 0
-    Divider.Parent = MainFrame
     
     local ContentFrame = Instance.new("Frame")
     ContentFrame.Name = "Content"
@@ -295,11 +293,12 @@ local function CreateHollowUI()
     ContentFrame.Parent = MainFrame
     
     local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Padding = UDim.new(0, 2)
+    UIListLayout.Padding = UDim.new(0, 3)
+    UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
     UIListLayout.Parent = ContentFrame
     
     local UIPaddingContent = Instance.new("UIPadding")
-    UIPaddingContent.PaddingLeft = UDim.new(0, 8)
+    UIPaddingContent.PaddingRight = UDim.new(0, 10)
     UIPaddingContent.PaddingTop = UDim.new(0, 5)
     UIPaddingContent.Parent = ContentFrame
     
@@ -330,11 +329,11 @@ local function UpdateHollowUI()
     -- Create status entries
     local function AddStatus(name, enabled, target)
         local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(1, 0, 0, 16)
+        Label.Size = UDim2.new(1, 0, 0, 18)
         Label.BackgroundTransparency = 1
-        Label.TextSize = 13
-        Label.Font = Enum.Font.SourceSans
-        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.TextSize = 14
+        Label.Font = Config['UI']['TextBold'] and Enum.Font.SourceSansBold or Enum.Font.SourceSans
+        Label.TextXAlignment = Enum.TextXAlignment.Right
         
         local statusText = enabled and "ON" or "OFF"
         local statusColor = enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
@@ -368,7 +367,7 @@ local function UpdateHollowUI()
     AddStatus("Double Tap", Script.Locals.IsDoubleTapping, nil)
     
     -- Adjust frame size
-    local contentHeight = #StatusLabels * 18 + 35
+    local contentHeight = #StatusLabels * 20 + 35
     HollowFrame.Size = UDim2.new(0, 200, 0, contentHeight)
 end
 
@@ -379,33 +378,58 @@ ESPFolder.Parent = game:GetService("CoreGui")
 shared.HollowCC_ESPFolder = ESPFolder
 
 local function CreateESPObject(player)
-    local objects = {
-        Box = nil,
-        Name = nil,
-        HealthBar = nil,
-        HealthText = nil,
-        Tracer = nil,
-        Distance = nil
-    }
+    local objects = {}
     
     if shared.HollowCC_Config['ESP']['Boxes'] then
         local Box = Instance.new("Frame")
         Box.Name = player.Name .. "_Box"
         Box.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
-        Box.BackgroundTransparency = 0.7
+        Box.BackgroundTransparency = 0.8
         Box.BorderSizePixel = 1
         Box.BorderColor3 = Color3.new(0, 0, 0)
         Box.Visible = false
         Box.Parent = ESPFolder
         objects.Box = Box
+        
+        local Corner1 = Instance.new("Frame")
+        Corner1.Size = UDim2.new(0, 6, 0, 2)
+        Corner1.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
+        Corner1.BorderSizePixel = 0
+        Corner1.Visible = false
+        Corner1.Parent = ESPFolder
+        objects.Corner1 = Corner1
+        
+        local Corner2 = Instance.new("Frame")
+        Corner2.Size = UDim2.new(0, 6, 0, 2)
+        Corner2.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
+        Corner2.BorderSizePixel = 0
+        Corner2.Visible = false
+        Corner2.Parent = ESPFolder
+        objects.Corner2 = Corner2
+        
+        local Corner3 = Instance.new("Frame")
+        Corner3.Size = UDim2.new(0, 2, 0, 6)
+        Corner3.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
+        Corner3.BorderSizePixel = 0
+        Corner3.Visible = false
+        Corner3.Parent = ESPFolder
+        objects.Corner3 = Corner3
+        
+        local Corner4 = Instance.new("Frame")
+        Corner4.Size = UDim2.new(0, 2, 0, 6)
+        Corner4.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
+        Corner4.BorderSizePixel = 0
+        Corner4.Visible = false
+        Corner4.Parent = ESPFolder
+        objects.Corner4 = Corner4
     end
     
     if shared.HollowCC_Config['ESP']['Names'] then
         local Name = Instance.new("TextLabel")
         Name.Name = player.Name .. "_Name"
         Name.BackgroundTransparency = 1
-        Name.TextColor3 = Color3.new(1, 1, 1)
-        Name.TextSize = 12
+        Name.TextColor3 = shared.HollowCC_Config['ESP']['TextColor']
+        Name.TextSize = 13
         Name.Font = Enum.Font.SourceSansBold
         Name.Visible = false
         Name.Parent = ESPFolder
@@ -413,6 +437,14 @@ local function CreateESPObject(player)
     end
     
     if shared.HollowCC_Config['ESP']['Health'] then
+        local HealthBarBG = Instance.new("Frame")
+        HealthBarBG.Name = player.Name .. "_HealthBarBG"
+        HealthBarBG.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        HealthBarBG.BorderSizePixel = 0
+        HealthBarBG.Visible = false
+        HealthBarBG.Parent = ESPFolder
+        objects.HealthBarBG = HealthBarBG
+        
         local HealthBar = Instance.new("Frame")
         HealthBar.Name = player.Name .. "_HealthBar"
         HealthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
@@ -420,25 +452,13 @@ local function CreateESPObject(player)
         HealthBar.Visible = false
         HealthBar.Parent = ESPFolder
         objects.HealthBar = HealthBar
-        
-        local HealthText = Instance.new("TextLabel")
-        HealthText.Name = player.Name .. "_HealthText"
-        HealthText.BackgroundTransparency = 1
-        HealthText.TextColor3 = Color3.new(1, 1, 1)
-        HealthText.TextSize = 10
-        HealthText.Font = Enum.Font.SourceSans
-        HealthText.Visible = false
-        HealthText.Parent = ESPFolder
-        objects.HealthText = HealthText
     end
     
     if shared.HollowCC_Config['ESP']['Tracers'] then
-        local Tracer = Instance.new("Frame")
-        Tracer.Name = player.Name .. "_Tracer"
-        Tracer.BackgroundColor3 = shared.HollowCC_Config['ESP']['Tracer Color']
-        Tracer.BorderSizePixel = 0
+        local Tracer = Drawing.new("Line")
+        Tracer.Color = shared.HollowCC_Config['ESP']['Tracer Color']
+        Tracer.Thickness = 1
         Tracer.Visible = false
-        Tracer.Parent = ESPFolder
         objects.Tracer = Tracer
     end
     
@@ -446,9 +466,9 @@ local function CreateESPObject(player)
         local Distance = Instance.new("TextLabel")
         Distance.Name = player.Name .. "_Distance"
         Distance.BackgroundTransparency = 1
-        Distance.TextColor3 = Color3.new(1, 1, 1)
-        Distance.TextSize = 10
-        Distance.Font = Enum.Font.SourceSans
+        Distance.TextColor3 = shared.HollowCC_Config['ESP']['TextColor']
+        Distance.TextSize = 11
+        Distance.Font = Enum.Font.SourceSansBold
         Distance.Visible = false
         Distance.Parent = ESPFolder
         objects.Distance = Distance
@@ -461,7 +481,11 @@ local function UpdateESP()
     if not shared.HollowCC_Config['ESP']['Enabled'] then
         for _, obj in pairs(Script.Locals.ESPObjects) do
             for _, visual in pairs(obj) do
-                if visual then visual.Visible = false end
+                if visual and typeof(visual) == "Instance" then
+                    visual.Visible = false
+                elseif visual and typeof(visual) == "table" and visual.Remove then
+                    visual.Visible = false
+                end
             end
         end
         return
@@ -472,7 +496,8 @@ local function UpdateESP()
     if not localCharacter then return end
     
     local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
-    if not localRoot then return end
+    local localHumanoid = localCharacter:FindFirstChild("Humanoid")
+    if not localRoot or not localHumanoid then return end
     
     for _, player in ipairs(Players:GetPlayers()) do
         if player == localPlayer then continue end
@@ -488,77 +513,114 @@ local function UpdateESP()
         
         if not character or not root or not humanoid then
             for _, obj in pairs(objects) do
-                if obj then obj.Visible = false end
+                if obj and typeof(obj) == "Instance" then
+                    obj.Visible = false
+                elseif obj and typeof(obj) == "table" and obj.Visible ~= nil then
+                    obj.Visible = false
+                end
             end
             continue
-        end
-        
-        -- Team check
-        if shared.HollowCC_Config['ESP']['Team Check'] then
-            -- Add team check logic here if needed
         end
         
         local distance = (localRoot.Position - root.Position).Magnitude
         if distance > shared.HollowCC_Config['ESP']['Max Distance'] then
             for _, obj in pairs(objects) do
-                if obj then obj.Visible = false end
+                if obj and typeof(obj) == "Instance" then
+                    obj.Visible = false
+                elseif obj and typeof(obj) == "table" and obj.Visible ~= nil then
+                    obj.Visible = false
+                end
             end
             continue
         end
         
-        local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
-        if not onScreen then
+        -- Get head and foot positions
+        local head = character:FindFirstChild("Head")
+        local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+        
+        if not head or not torso then
             for _, obj in pairs(objects) do
-                if obj then obj.Visible = false end
+                if obj and typeof(obj) == "Instance" then
+                    obj.Visible = false
+                elseif obj and typeof(obj) == "table" and obj.Visible ~= nil then
+                    obj.Visible = false
+                end
             end
             continue
         end
         
-        local scale = 1000 / pos.Z
-        local width = math.clamp(scale * 3, 30, 100)
-        local height = math.clamp(scale * 5, 50, 150)
-        local x = pos.X - width / 2
-        local y = pos.Y - height / 2
+        local headPos = Camera:WorldToViewportPoint(head.Position)
+        local footPos = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+        
+        if headPos.Z < 0 or footPos.Z < 0 then
+            for _, obj in pairs(objects) do
+                if obj and typeof(obj) == "Instance" then
+                    obj.Visible = false
+                elseif obj and typeof(obj) == "table" and obj.Visible ~= nil then
+                    obj.Visible = false
+                end
+            end
+            continue
+        end
+        
+        local height = math.abs(headPos.Y - footPos.Y)
+        local width = height * 0.6
+        local x = headPos.X - width / 2
+        local y = headPos.Y
         
         -- Update Box
         if objects.Box then
             objects.Box.Visible = true
             objects.Box.Size = UDim2.new(0, width, 0, height)
             objects.Box.Position = UDim2.new(0, x, 0, y)
+            
+            -- Update corners
+            if objects.Corner1 then
+                objects.Corner1.Visible = true
+                objects.Corner1.Position = UDim2.new(0, x, 0, y)
+            end
+            if objects.Corner2 then
+                objects.Corner2.Visible = true
+                objects.Corner2.Position = UDim2.new(0, x + width - 6, 0, y)
+            end
+            if objects.Corner3 then
+                objects.Corner3.Visible = true
+                objects.Corner3.Position = UDim2.new(0, x, 0, y)
+            end
+            if objects.Corner4 then
+                objects.Corner4.Visible = true
+                objects.Corner4.Position = UDim2.new(0, x + width - 2, 0, y)
+            end
         end
         
         -- Update Name
         if objects.Name then
             objects.Name.Visible = true
             objects.Name.Text = player.DisplayName
-            objects.Name.Position = UDim2.new(0, x, 0, y - 15)
-            objects.Name.Size = UDim2.new(0, width, 0, 15)
+            objects.Name.Position = UDim2.new(0, headPos.X - 50, 0, y - 20)
+            objects.Name.Size = UDim2.new(0, 100, 0, 15)
         end
         
         -- Update Health
-        if objects.HealthBar and objects.HealthText then
-            local healthPercent = humanoid.Health / humanoid.MaxHealth
+        if objects.HealthBar and objects.HealthBarBG then
+            local healthPercent = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+            objects.HealthBarBG.Visible = true
+            objects.HealthBarBG.Size = UDim2.new(0, 4, 0, height)
+            objects.HealthBarBG.Position = UDim2.new(0, x - 8, 0, y)
+            
             objects.HealthBar.Visible = true
             objects.HealthBar.Size = UDim2.new(0, 4, 0, height * healthPercent)
             objects.HealthBar.Position = UDim2.new(0, x - 8, 0, y + height * (1 - healthPercent))
             objects.HealthBar.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
-            
-            objects.HealthText.Visible = true
-            objects.HealthText.Text = math.floor(humanoid.Health) .. " HP"
-            objects.HealthText.Position = UDim2.new(0, x + width + 5, 0, y)
         end
         
         -- Update Tracer
         if objects.Tracer then
             objects.Tracer.Visible = true
             local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-            local targetPos = Vector2.new(pos.X, pos.Y + height / 2)
-            local distance = (targetPos - screenCenter).Magnitude
-            local angle = math.atan2(targetPos.Y - screenCenter.Y, targetPos.X - screenCenter.X)
-            
-            objects.Tracer.Size = UDim2.new(0, distance, 0, 1)
-            objects.Tracer.Position = UDim2.new(0, screenCenter.X, 0, screenCenter.Y)
-            objects.Tracer.Rotation = math.deg(angle)
+            local targetPos = Vector2.new(x + width / 2, y + height)
+            objects.Tracer.From = screenCenter
+            objects.Tracer.To = targetPos
         end
         
         -- Update Distance
@@ -912,7 +974,7 @@ end
 -- Camera Mode Check
 local function GetCameraMode()
     local zoom = (Camera.CFrame.Position - Camera.Focus.Position).Magnitude
-    local isFirstPerson = zoom < 1
+    local isFirstPerson = zoom < 1.5
     local isShiftLocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
     
     return {
@@ -926,15 +988,16 @@ local function ShouldCamlockWork()
     local mode = GetCameraMode()
     local config = shared.HollowCC_Config['Conditions']
     
+    -- If third person and NOT shift locked, don't work
+    if mode.ThirdPerson and not mode.ShiftLocked then
+        return false
+    end
+    
     if mode.FirstPerson and config['First Person Camlock'] then
         return true
     end
     
     if mode.ShiftLocked and config['ShiftLock Camlock'] then
-        return true
-    end
-    
-    if mode.ThirdPerson and config['Third Person Camlock'] then
         return true
     end
     
@@ -1144,22 +1207,23 @@ function Script:GetHitPosition(Mode)
     if Mode == 'Camlock' then
         local Config = shared.HollowCC_Config['Camlock']
         local Object = Script.Locals.CamlockTarget.Character
-        if not Object then return end
+        if not Object then return nil
         
-        local NearestPart = Script:GetClosestPartToCursor(Object)
-        local HitPosition
+        local targetPart = Object:FindFirstChild(Config['Hit Part']) or Object:FindFirstChild("HumanoidRootPart")
+        if not targetPart then return nil
         
-        if Config['Hit Part'] == 'Closest Point' then
-            HitPosition = NearestPart.Position
-        else
-            HitPosition = Object[Config['Hit Part']].Position
-        end
+        local HitPosition = targetPart.Position
         
         if Config['Prediction']['Enabled'] then
-            return HitPosition + Object.HumanoidRootPart.Velocity * Vector3.new(Config['Prediction']['X'], Config['Prediction']['Y'], Config['Prediction']['Z'])
-        else
-            return HitPosition
+            local velocity = targetPart.Velocity
+            HitPosition = HitPosition + Vector3.new(
+                velocity.X * Config['Prediction']['X'],
+                velocity.Y * Config['Prediction']['Y'],
+                velocity.Z * Config['Prediction']['Z']
+            )
         end
+        
+        return HitPosition
     end
 end
 
@@ -1265,7 +1329,7 @@ function Script:AimAssist()
     )
 end
 
--- NEW: Camlock Function
+-- FIXED: Camlock Function with proper smoothing
 function Script:Camlock()
     local Enabled = shared.HollowCC_Config['Camlock']['Enabled'] 
     if not Enabled then return end
@@ -1283,15 +1347,37 @@ function Script:Camlock()
     if shared.HollowCC_Config['Conditions']['Chat Focused'] and UserInputService:GetFocusedTextBox() then return end
 
     local Config = shared.HollowCC_Config['Camlock'] 
-    local Hit = Script:GetHitPosition("Camlock")
+    local HitPosition = Script:GetHitPosition("Camlock")
     
-    if not Hit then return end
+    if not HitPosition then return end
 
-    local Smoothness = Config['Smoothness']
-    Camera.CFrame = Camera.CFrame:Lerp(
-        CFrame.new(Camera.CFrame.Position, Hit),
-        Smoothness
-    )
+    -- Calculate distance to target for shake reduction
+    local localRoot = Self.Character and Self.Character:FindFirstChild("HumanoidRootPart")
+    local targetRoot = Character:FindFirstChild("HumanoidRootPart")
+    if not localRoot or not targetRoot then return end
+    
+    local distance = (localRoot.Position - targetRoot.Position).Magnitude
+    
+    -- Adjust smoothness based on distance (closer = more smoothing to reduce shake)
+    local baseSmoothness = Config['Smoothness']
+    local adjustedSmoothness = baseSmoothness
+    
+    if Config['ShakeReduction'] then
+        if distance < 10 then
+            adjustedSmoothness = math.min(baseSmoothness * 2, 0.15) -- More smoothing when close
+        elseif distance < 30 then
+            adjustedSmoothness = baseSmoothness * 1.5
+        end
+    end
+    
+    -- Clamp smoothness
+    adjustedSmoothness = math.clamp(adjustedSmoothness, 0.01, 0.2)
+    
+    -- Apply smooth camlock
+    local targetCFrame = CFrame.new(Camera.CFrame.Position, HitPosition)
+    
+    -- Use lerp for smooth transition
+    Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, adjustedSmoothness)
 end
 
 function Script:Triggerbot()
@@ -1324,10 +1410,18 @@ end
 function Script:Physics()
     if not Self.Character then return end
     
+    -- FIXED: Walkspeed with configurable speed and toggle
     if shared.HollowCC_Config['Player Modifications']['Walk Speed']['Enabled'] and Script.Locals.IsWalkSpeeding then
         local Object, Humanoid, RootPart = Script:ValidateClient(Self)
         if Humanoid and RootPart then
-            Humanoid.WalkSpeed = shared.HollowCC_Config['Player Modifications']['Walk Speed']['Speed'] * 100
+            local speed = shared.HollowCC_Config['Player Modifications']['Walk Speed']['Speed']
+            Humanoid.WalkSpeed = speed
+        end
+    elseif not Script.Locals.IsWalkSpeeding then
+        -- Reset to default when toggled off
+        local Object, Humanoid, RootPart = Script:ValidateClient(Self)
+        if Humanoid then
+            Humanoid.WalkSpeed = 16 -- Default walkspeed
         end
     end
     
@@ -1423,9 +1517,11 @@ RBXConnection(UserInputService.InputBegan, function(Input, Processed)
         end
     end
     
-    -- Walk Speed
+    -- Walk Speed Toggle
     if Input.KeyCode == WalkSpeedKey then
         Script.Locals.IsWalkSpeeding = not Script.Locals.IsWalkSpeeding
+        -- Toggle the enabled state in config too
+        Config['Player Modifications']['Walk Speed']['Enabled'] = Script.Locals.IsWalkSpeeding
     end
     
     -- Double Tap
