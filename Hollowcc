@@ -1,99 +1,194 @@
--- Clear everything on re-execute
-if _G.HollowCC_Cleanup then
-    _G.HollowCC_Cleanup()
+-- Clear old config on re-execute
+if shared.HollowCC_Config then
+    shared.HollowCC_Config = nil
+    shared.Saved = nil
+    for _, conn in ipairs(shared.HollowCC_Connections or {}) do
+        pcall(function() conn:Disconnect() end)
+    end
+    shared.HollowCC_Connections = {}
+    if shared.HollowCC_ESPFolder then
+        pcall(function() shared.HollowCC_ESPFolder:Destroy() end)
+    end
+    if shared.HollowCC_UI then
+        pcall(function() shared.HollowCC_UI:Destroy() end)
+    end
 end
+
+shared['Auth_Key'] = ''
+shared.Saved = {
+    ['G​e​n​e​r​a​l​'] = { 
+        ['​H​o​t​k​e​y​s​'] = { 
+            ['A​i​m​ ​B​o​t'] = 'C', 
+            ['W​a​l​k​ ​S​p​e​e​d'] = 'G', 
+            ['S​i​l​e​n​t​ ​A​i​m'] = 'O', 
+            ['D​o​u​b​l​e​ ​T​a​p'] = 'E', 
+            ['T​r​i​g​g​e​r​ ​B​o​t'] = 'X',
+            ['T​r​i​g​g​e​r​ ​B​o​t​ ​T​a​r​g​e​t'] = 'Q', 
+            ['S​i​l​e​n​t​ ​A​i​m​ ​T​a​r​g​e​t'] = 'Q', 
+            ['H​i​t​ ​P​a​r​t Override'] = 'F', 
+            ['I​n​v​e​n​t​o​r​y ​S​o​r​t​e​r'] = 'R',
+            ['E​S​P'] = 'P',
+            ['C​a​m​l​o​c​k'] = 'V'
+        },
+        ['S​h​o​w​ ​H​o​t​k​e​y​s'] = true,
+        ['U​I​ ​P​o​s​i​t​i​o​n'] = UDim2.new(1, -200, 0, 10), -- Top right
+        ['T​i​t​l​e​ ​C​o​l​o​r'] = Color3.fromRGB(255, 140, 0), -- Orange
+        ['T​e​x​t​C​o​l​o​r'] = Color3.fromRGB(255, 255, 255),
+        ['B​a​c​k​g​r​o​u​n​d​E​n​a​b​l​e​d'] = false
+    },
+
+    ['C​o​n​d​i​t​i​o​n​s'] = {
+        ['P​l​a​y​e​r​ ​P​r​o​t​e​c​t​e​d'] = true,
+        ['P​l​a​y​e​r​ ​V​i​s​i​b​l​e'] = true,
+        ['P​l​a​y​e​r​ ​G​r​a​b​b​e​d'] = true,
+        ['P​l​a​y​e​r​ ​K​n​o​c​k​e​d'] = true,
+        ['P​l​a​y​e​r​ ​M​o​v​i​n​g'] = false,
+        ['T​o​o​l​ ​E​q​u​i​p​p​e​d'] = false,
+        ['S​e​l​f​ ​K​n​o​c​k​e​d'] = false,
+        ['C​h​a​t​ ​F​o​c​u​s​e​d'] = true,
+        ['S​h​i​f​t​ ​L​o​c​k​e​d'] = false,
+        ['T​h​i​r​d​ ​P​e​r​s​o​n'] = false,
+        ['F​i​r​s​t​ ​P​e​r​s​o​n​ ​C​a​m​l​o​c​k'] = true,
+        ['T​h​i​r​d​ ​P​e​r​s​o​n​ ​C​a​m​l​o​c​k'] = false,
+        ['S​h​i​f​t​L​o​c​k​ ​C​a​m​l​o​c​k'] = true
+    },
+
+    ['S​i​l​e​n​t​ ​A​i​m'] = { 
+        ['E​n​a​b​l​e​d'] = false, 
+        ['S​e​l​e​c​t​i​o​n'] = 'Automatic',
+        ['M​a​x​ ​D​i​s​t​a​n​c​e'] = math.huge,
+        ['YAxis'] = false,
+        ['H​i​t​C​h​a​n​c​e'] = 100,
+        ['YStabilizer'] = 0,
+        ['H​i​t​ ​P​a​r​t'] = 'Head',
+        ['C​l​o​s​e​s​t​ ​P​o​i​n​t'] = { ['M​o​d​e'] = 'Advanced', ['S​c​a​l​e'] = 0.15 },
+        ['H​i​t​ ​P​a​r​t Override'] = { ['E​n​a​b​l​e​d'] = false, 'Head' },
+        ['P​r​e​d​i​c​t​i​o​n'] = { ['E​n​a​b​l​e​d'] = true, ['X'] = 0.13, ['Y'] = 0.13, ['Z'] = 0.13 },
+        ['F​O​V'] = { 
+            ['E​n​a​b​l​e​d'] = true, 
+            ['V​i​s​i​b​l​e'] = false,
+            ['T​y​p​e'] = 'Circle',
+            ['C​i​r​c​l​e'] = 150,
+            ['Hit Scan'] = math.huge
+        }        
+    },
+    
+    ['C​a​m​l​o​c​k'] = {
+        ['E​n​a​b​l​e​d'] = false,
+        ['H​i​t​ ​P​a​r​t'] = 'Head',
+        ['S​m​o​o​t​h​n​e​s​s'] = 0.08,
+        ['P​r​e​d​i​c​t​i​o​n'] = { ['E​n​a​b​l​e​d'] = true, ['X'] = 0.13, ['Y'] = 0.13, ['Z'] = 0.13 },
+        ['S​h​a​k​e​R​e​d​u​c​t​i​o​n'] = true
+    },
+
+    ['A​i​m​ ​B​o​t'] = {
+        ['E​n​a​b​l​e​d'] = false, 
+        ['H​i​t​ ​P​a​r​t'] = 'Head',
+        ['S​t​i​c​k​i​n​e​s​s'] = 0.1,
+        ['S​e​n​s​i​t​i​v​i​t​y'] = 2,
+        ['E​a​s​i​n​g ​S​t​y​l​e'] = 'Circular',
+        ['E​a​s​i​n​g ​D​i​r​e​c​t​i​o​n'] = 'InOut',        
+        ['P​r​e​d​i​c​t​i​o​n'] = { ['E​n​a​b​l​e​d'] = true, ['X'] = 0.13, ['Y'] = 0.13, ['Z'] = 0.13 },
+        ['F​O​V'] = { ['E​n​a​b​l​e​d'] = true, ['S​i​z​e'] = 300 }
+    },
+
+    ['T​r​i​g​g​e​r​ ​B​o​t'] = {
+        ['E​n​a​b​l​e​d'] = false, 
+        ['S​e​l​e​c​t​i​o​n'] = 'Automatic',
+        ['M​a​x​ ​D​i​s​t​a​n​c​e'] = 250,
+        ['R​a​d​i​u​s'] = math.huge,
+        ['C​o​o​l​d​o​w​n'] = 0,
+        ['A​c​t​i​v​a​t​i​o​n'] = { ['M​o​d​e'] = 'Keybind', ['T​y​p​e'] = 'Toggle' },
+        ['P​r​e​d​i​c​t​i​o​n'] = { ['E​n​a​b​l​e​d'] = false, 0.13 }
+    },
+    
+    ['E​S​P'] = {
+        ['E​n​a​b​l​e​d'] = false,
+        ['B​o​x​e​s'] = true,
+        ['N​a​m​e​s'] = true,
+        ['H​e​a​l​t​h'] = true,
+        ['D​i​s​t​a​n​c​e'] = true,
+        ['T​r​a​c​e​r​s'] = false,
+        ['M​a​x​ ​D​i​s​t​a​n​c​e'] = 1000,
+        ['C​o​l​o​r'] = Color3.fromRGB(255, 140, 0) -- Orange
+    },
+    
+    ['G​u​n​ ​M​o​d​i​f​i​c​a​t​i​o​n​s'] = {
+        ['D​o​u​b​l​e​ ​T​a​p'] = { ['E​n​a​b​l​e​d'] = false, { "[Revolver]", "[Silencer]"} },
+        ['S​p​r​e​a​d​ ​M​o​d​i​f​i​e​r'] = {
+            ['E​n​a​b​l​e​d'] = true,
+            ['Value'] = 0.8
+        }
+    },
+
+    ['P​l​a​y​e​r​ ​M​o​d​i​f​i​c​a​t​i​o​n​s'] = {
+        ['N​o​ ​J​u​m​p​ ​C​o​o​l​d​o​w​n'] = false,
+        ['N​o​ ​T​r​i​p​p​i​n​g'] = false,
+        ['W​a​l​k​ ​S​p​e​e​d'] = { ['E​n​a​b​l​e​d'] = false, ['S​p​e​e​d'] = 23, ['T​o​g​g​l​e'] = true }
+    }
+}
+
+shared.HollowCC_Config = shared.Saved
 
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
--- Config
-local Config = {
-    -- Hotkeys
-    SilentAimKey = Enum.KeyCode.O,
-    CamlockKey = Enum.KeyCode.V,
-    ESPKey = Enum.KeyCode.P,
-    WalkSpeedKey = Enum.KeyCode.G,
-    
-    -- Settings
-    WalkSpeed = 23,
-    CamlockSmoothness = 0.08,
-    CamlockPrediction = 0.13,
-    
-    -- ESP
-    ESPColor = Color3.fromRGB(255, 140, 0), -- Orange
-    ESPMaxDistance = 1000,
-    
-    -- States
+-- State
+local State = {
     SilentAim = false,
     Camlock = false,
     ESP = false,
-    WalkSpeedEnabled = false,
-}
-
--- State
-local State = {
+    WalkSpeed = false,
+    AimBot = false,
+    TriggerBot = false,
     SilentAimTarget = nil,
     CamlockTarget = nil,
+    AimBotTarget = nil,
+    TriggerBotTarget = nil,
     ESPObjects = {},
-    LastCamlockPos = nil,
-    CurrentCameraMode = "ThirdPerson"
+    Connections = {}
 }
 
--- Cleanup function
-_G.HollowCC_Cleanup = function()
-    if State.ScreenGui then
-        State.ScreenGui:Destroy()
-    end
-    if State.ESPFolder then
-        State.ESPFolder:Destroy()
-    end
-    for _, conn in ipairs(State.Connections or {}) do
-        pcall(function() conn:Disconnect() end)
-    end
-end
+-- Cleanup
+shared.HollowCC_Connections = State.Connections
 
-State.Connections = {}
-
--- Helper function
-local function AddConnection(conn)
-    table.insert(State.Connections, conn)
+if shared.HollowCC_UI then
+    pcall(function() shared.HollowCC_UI:Destroy() end)
 end
 
 -- Create UI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "HollowCC"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = game:GetService("CoreGui")
-State.ScreenGui = ScreenGui
+shared.HollowCC_UI = ScreenGui
 
--- Main UI Frame (No background)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "Main"
 MainFrame.Size = UDim2.new(0, 180, 0, 150)
-MainFrame.Position = UDim2.new(1, -190, 0, 10) -- Top right
+MainFrame.Position = shared.Saved['G​e​n​e​r​a​l​']['U​I​ ​P​o​s​i​t​i​o​n']
 MainFrame.BackgroundTransparency = 1 -- No background
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
--- Title
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
 Title.Size = UDim2.new(1, 0, 0, 25)
 Title.BackgroundTransparency = 1
 Title.Text = "Hollow.cc"
-Title.TextColor3 = Color3.fromRGB(255, 140, 0) -- Orange
+Title.TextColor3 = shared.Saved['G​e​n​e​r​a​l​']['T​i​t​l​e​ ​C​o​l​o​r']
 Title.TextSize = 20
-Title.Font = Enum.Font.SourceSansBold -- Bold
+Title.Font = Enum.Font.SourceSansBold
 Title.TextXAlignment = Enum.TextXAlignment.Right
 Title.Parent = MainFrame
 
@@ -101,7 +196,6 @@ local TitlePadding = Instance.new("UIPadding")
 TitlePadding.PaddingRight = UDim.new(0, 10)
 TitlePadding.Parent = Title
 
--- Status Container
 local StatusContainer = Instance.new("Frame")
 StatusContainer.Name = "Status"
 StatusContainer.Size = UDim2.new(1, 0, 1, -30)
@@ -110,7 +204,7 @@ StatusContainer.BackgroundTransparency = 1
 StatusContainer.Parent = MainFrame
 
 local ListLayout = Instance.new("UIListLayout")
-ListLayout.Padding = UDim.new(0, 4)
+ListLayout.Padding = UDim.new(0, 3)
 ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 ListLayout.Parent = StatusContainer
 
@@ -122,22 +216,21 @@ ContentPadding.Parent = StatusContainer
 local StatusLabels = {}
 
 local function UpdateUI()
-    -- Clear old
     for _, label in pairs(StatusLabels) do
         label:Destroy()
     end
     StatusLabels = {}
     
-    local function AddStatus(text, enabled, extra)
+    local function AddStatus(name, enabled, extra)
         local Label = Instance.new("TextLabel")
         Label.Size = UDim2.new(1, 0, 0, 18)
         Label.BackgroundTransparency = 1
         Label.TextSize = 14
-        Label.Font = Enum.Font.SourceSansBold -- Bold
+        Label.Font = Enum.Font.SourceSansBold
         Label.TextXAlignment = Enum.TextXAlignment.Right
         
         local statusText = enabled and "ON" or "OFF"
-        local displayText = text .. ": " .. statusText
+        local displayText = name .. ": " .. statusText
         if extra and enabled then
             displayText = displayText .. " | " .. extra
         end
@@ -148,28 +241,30 @@ local function UpdateUI()
         table.insert(StatusLabels, Label)
     end
     
-    AddStatus("Silent Aim", Config.SilentAim, State.SilentAimTarget and State.SilentAimTarget.DisplayName or nil)
-    AddStatus("Camlock", Config.Camlock, State.CamlockTarget and State.CamlockTarget.DisplayName or nil)
-    AddStatus("ESP", Config.ESP, nil)
-    AddStatus("WalkSpeed", Config.WalkSpeedEnabled, tostring(Config.WalkSpeed))
+    AddStatus("Silent Aim", State.SilentAim, State.SilentAimTarget and State.SilentAimTarget.DisplayName or nil)
+    AddStatus("Camlock", State.Camlock, State.CamlockTarget and State.CamlockTarget.DisplayName or nil)
+    AddStatus("Aim Bot", State.AimBot, State.AimBotTarget and State.AimBotTarget.DisplayName or nil)
+    AddStatus("Trigger Bot", State.TriggerBot, State.TriggerBotTarget and State.TriggerBotTarget.DisplayName or nil)
+    AddStatus("ESP", State.ESP, nil)
+    AddStatus("WalkSpeed", State.WalkSpeed, tostring(shared.Saved['P​l​a​y​e​r​ ​M​o​d​i​f​i​c​a​t​i​o​n​s']['W​a​l​k​ ​S​p​e​e​d']['S​p​e​e​d']))
     
-    -- Adjust height
-    MainFrame.Size = UDim2.new(0, 180, 0, 30 + (#StatusLabels * 22))
+    MainFrame.Size = UDim2.new(0, 180, 0, 30 + (#StatusLabels * 21))
 end
 
 -- ESP System
 local ESPFolder = Instance.new("Folder")
 ESPFolder.Name = "ESP"
 ESPFolder.Parent = ScreenGui
-State.ESPFolder = ESPFolder
+shared.HollowCC_ESPFolder = ESPFolder
 
 local function CreateESP(player)
     local esp = {}
     
-    -- Corner box (4 lines)
-    for i = 1, 4 do
+    -- Corner box lines
+    for i = 1, 8 do
         local line = Instance.new("Frame")
-        line.BackgroundColor3 = Config.ESPColor
+        line.Name = "Line" .. i
+        line.BackgroundColor3 = shared.Saved['E​S​P']['C​o​l​o​r']
         line.BorderSizePixel = 0
         line.Visible = false
         line.Parent = ESPFolder
@@ -178,8 +273,9 @@ local function CreateESP(player)
     
     -- Name
     local name = Instance.new("TextLabel")
+    name.Name = "Name"
     name.BackgroundTransparency = 1
-    name.TextColor3 = Config.ESPColor
+    name.TextColor3 = shared.Saved['E​S​P']['C​o​l​o​r']
     name.TextSize = 13
     name.Font = Enum.Font.SourceSansBold
     name.Visible = false
@@ -188,12 +284,14 @@ local function CreateESP(player)
     
     -- Health bar
     local healthBg = Instance.new("Frame")
+    healthBg.Name = "HealthBg"
     healthBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     healthBg.BorderSizePixel = 0
     healthBg.Visible = false
     healthBg.Parent = ESPFolder
     
     local healthBar = Instance.new("Frame")
+    healthBar.Name = "HealthBar"
     healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
     healthBar.BorderSizePixel = 0
     healthBar.Visible = false
@@ -204,20 +302,20 @@ local function CreateESP(player)
     
     -- Distance
     local dist = Instance.new("TextLabel")
+    dist.Name = "Distance"
     dist.BackgroundTransparency = 1
-    dist.TextColor3 = Config.ESPColor
+    dist.TextColor3 = shared.Saved['E​S​P']['C​o​l​o​r']
     dist.TextSize = 11
     dist.Font = Enum.Font.SourceSansBold
     dist.Visible = false
     dist.Parent = ESPFolder
-    dist.Text = ""
     esp.Distance = dist
     
     return esp
 end
 
 local function UpdateESP()
-    if not Config.ESP then
+    if not State.ESP then
         for _, esp in pairs(State.ESPObjects) do
             for _, v in pairs(esp) do
                 if typeof(v) == "Instance" then
@@ -256,7 +354,7 @@ local function UpdateESP()
         end
         
         local distance = (localRoot.Position - root.Position).Magnitude
-        if distance > Config.ESPMaxDistance then
+        if distance > shared.Saved['E​S​P']['M​a​x​ ​D​i​s​t​a​n​c​e'] then
             for _, v in pairs(esp) do
                 if typeof(v) == "Instance" then
                     v.Visible = false
@@ -282,7 +380,7 @@ local function UpdateESP()
         local x = headPos.X - width / 2
         local y = headPos.Y
         
-        -- Draw corner box
+        -- Draw corner box (8 lines for corners)
         local lineThickness = 1
         
         -- Top left
@@ -304,50 +402,22 @@ local function UpdateESP()
         esp.Line4.Visible = true
         
         -- Bottom left
-        local line5 = esp["Line5"] or Instance.new("Frame")
-        if not esp["Line5"] then
-            line5.BackgroundColor3 = Config.ESPColor
-            line5.BorderSizePixel = 0
-            line5.Parent = ESPFolder
-            esp["Line5"] = line5
-        end
-        line5.Size = UDim2.new(0, width * 0.4, 0, lineThickness)
-        line5.Position = UDim2.new(0, x, 0, y + height - lineThickness)
-        line5.Visible = true
+        esp.Line5.Size = UDim2.new(0, width * 0.4, 0, lineThickness)
+        esp.Line5.Position = UDim2.new(0, x, 0, y + height - lineThickness)
+        esp.Line5.Visible = true
         
-        local line6 = esp["Line6"] or Instance.new("Frame")
-        if not esp["Line6"] then
-            line6.BackgroundColor3 = Config.ESPColor
-            line6.BorderSizePixel = 0
-            line6.Parent = ESPFolder
-            esp["Line6"] = line6
-        end
-        line6.Size = UDim2.new(0, lineThickness, 0, height * 0.4)
-        line6.Position = UDim2.new(0, x, 0, y + height * 0.6)
-        line6.Visible = true
+        esp.Line6.Size = UDim2.new(0, lineThickness, 0, height * 0.4)
+        esp.Line6.Position = UDim2.new(0, x, 0, y + height * 0.6)
+        esp.Line6.Visible = true
         
         -- Bottom right
-        local line7 = esp["Line7"] or Instance.new("Frame")
-        if not esp["Line7"] then
-            line7.BackgroundColor3 = Config.ESPColor
-            line7.BorderSizePixel = 0
-            line7.Parent = ESPFolder
-            esp["Line7"] = line7
-        end
-        line7.Size = UDim2.new(0, width * 0.4, 0, lineThickness)
-        line7.Position = UDim2.new(0, x + width * 0.6, 0, y + height - lineThickness)
-        line7.Visible = true
+        esp.Line7.Size = UDim2.new(0, width * 0.4, 0, lineThickness)
+        esp.Line7.Position = UDim2.new(0, x + width * 0.6, 0, y + height - lineThickness)
+        esp.Line7.Visible = true
         
-        local line8 = esp["Line8"] or Instance.new("Frame")
-        if not esp["Line8"] then
-            line8.BackgroundColor3 = Config.ESPColor
-            line8.BorderSizePixel = 0
-            line8.Parent = ESPFolder
-            esp["Line8"] = line8
-        end
-        line8.Size = UDim2.new(0, lineThickness, 0, height * 0.4)
-        line8.Position = UDim2.new(0, x + width - lineThickness, 0, y + height * 0.6)
-        line8.Visible = true
+        esp.Line8.Size = UDim2.new(0, lineThickness, 0, height * 0.4)
+        esp.Line8.Position = UDim2.new(0, x + width - lineThickness, 0, y + height * 0.6)
+        esp.Line8.Visible = true
         
         -- Name
         esp.Name.Text = player.DisplayName
@@ -379,7 +449,6 @@ local function GetClosestPlayer(maxDist)
     maxDist = maxDist or math.huge
     local closest = nil
     local minDist = maxDist
-    
     local mousePos = UserInputService:GetMouseLocation()
     
     for _, player in ipairs(Players:GetPlayers()) do
@@ -395,8 +464,11 @@ local function GetClosestPlayer(maxDist)
         if not onScreen then continue end
         
         -- Checks
-        if char:FindFirstChild("Forcefield") then continue end
-        if char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
+        if shared.Saved['C​o​n​d​i​t​i​o​n​s']['P​l​a​y​e​r​ ​P​r​o​t​e​c​t​e​d'] and char:FindFirstChild("Forcefield") then continue end
+        if shared.Saved['C​o​n​d​i​t​i​o​n​s']['P​l​a​y​e​r​ ​K​n​o​c​k​e​d'] then
+            local bodyEffects = char:FindFirstChild("BodyEffects")
+            if bodyEffects and bodyEffects:FindFirstChild("K.O") and bodyEffects["K.O"].Value then continue end
+        end
         
         local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
         if dist < minDist then
@@ -411,7 +483,7 @@ end
 -- Check Camera Mode
 local function GetCameraMode()
     local zoom = (Camera.CFrame.Position - Camera.Focus.Position).Magnitude
-    local isFirstPerson = zoom < 2
+    local isFirstPerson = zoom < 1.5
     local isShiftLocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
     
     return {
@@ -423,13 +495,13 @@ end
 
 -- Camlock Function
 local function DoCamlock()
-    if not Config.Camlock then return end
+    if not State.Camlock then return end
     if not State.CamlockTarget then return end
     
     local char = State.CamlockTarget.Character
     if not char then return end
     
-    local root = char:FindFirstChild("HumanoidRootPart")
+    local root = char:FindFirstChild(shared.Saved['C​a​m​l​o​c​k']['H​i​t​ ​P​a​r​t']) or char:FindFirstChild("HumanoidRootPart")
     if not root then return end
     
     -- Check camera mode
@@ -438,54 +510,135 @@ local function DoCamlock()
         return -- Don't work in third person unless shift locked
     end
     
-    -- Get target position
     local targetPos = root.Position
-    local velocity = root.Velocity
     
     -- Apply prediction
-    targetPos = targetPos + Vector3.new(
-        velocity.X * Config.CamlockPrediction,
-        velocity.Y * Config.CamlockPrediction,
-        velocity.Z * Config.CamlockPrediction
-    )
+    if shared.Saved['C​a​m​l​o​c​k']['P​r​e​d​i​c​t​i​o​n']['E​n​a​b​l​e​d'] then
+        local velocity = root.Velocity
+        targetPos = targetPos + Vector3.new(
+            velocity.X * shared.Saved['C​a​m​l​o​c​k']['P​r​e​d​i​c​t​i​o​n']['X'],
+            velocity.Y * shared.Saved['C​a​m​l​o​c​k']['P​r​e​d​i​c​t​i​o​n']['Y'],
+            velocity.Z * shared.Saved['C​a​m​l​o​c​k']['P​r​e​d​i​c​t​i​o​n']['Z']
+        )
+    end
     
-    -- Smooth camlock
-    local targetCF = CFrame.new(Camera.CFrame.Position, targetPos)
-    Camera.CFrame = Camera.CFrame:Lerp(targetCF, Config.CamlockSmoothness)
+    -- Calculate distance for shake reduction
+    local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if localRoot then
+        local distance = (localRoot.Position - root.Position).Magnitude
+        
+        -- Adjust smoothness based on distance
+        local smoothness = shared.Saved['C​a​m​l​o​c​k']['S​m​o​o​t​h​n​e​s​s']
+        if shared.Saved['C​a​m​l​o​c​k']['S​h​a​k​e​R​e​d​u​c​t​i​o​n'] then
+            if distance < 10 then
+                smoothness = math.min(smoothness * 2, 0.15)
+            elseif distance < 30 then
+                smoothness = smoothness * 1.5
+            end
+        end
+        
+        smoothness = math.clamp(smoothness, 0.01, 0.2)
+        
+        -- Apply smooth camlock
+        local targetCF = CFrame.new(Camera.CFrame.Position, targetPos)
+        Camera.CFrame = Camera.CFrame:Lerp(targetCF, smoothness)
+    end
 end
 
 -- Silent Aim Function
 local function DoSilentAim(tool)
-    if not Config.SilentAim then return end
+    if not State.SilentAim then return end
     if not State.SilentAimTarget then return end
     
     local char = State.SilentAimTarget.Character
     if not char then return end
     
-    local root = char:FindFirstChild("HumanoidRootPart")
+    local root = char:FindFirstChild(shared.Saved['S​i​l​e​n​t​ ​A​i​m']['H​i​t​ ​P​a​r​t']) or char:FindFirstChild("HumanoidRootPart")
     if not root then return end
     
-    -- Fire remote with target position
-    local targetPos = root.Position + Vector3.new(0, 1, 0) -- Aim at upper body
+    local targetPos = root.Position
     
-    -- Get tool handle
+    -- Apply prediction
+    if shared.Saved['S​i​l​e​n​t​ ​A​i​m']['P​r​e​d​i​c​t​i​o​n']['E​n​a​b​l​e​d'] then
+        local velocity = root.Velocity
+        targetPos = targetPos + Vector3.new(
+            velocity.X * shared.Saved['S​i​l​e​n​t​ ​A​i​m']['P​r​e​d​i​c​t​i​o​n']['X'],
+            velocity.Y * shared.Saved['S​i​l​e​n​t​ ​A​i​m']['P​r​e​d​i​c​t​i​o​n']['Y'],
+            velocity.Z * shared.Saved['S​i​l​e​n​t​ ​A​i​m']['P​r​e​d​i​c​t​i​o​n']['Z']
+        )
+    end
+    
+    -- Fire remote
     local handle = tool:FindFirstChild("Handle")
     if not handle then return end
     
-    -- Fire the gun event
     local remote = tool:FindFirstChild("RemoteEvent")
     if remote then
         remote:FireServer("Shoot")
-        
-        -- Fire main event
-        local origin = handle.Position
-        ReplicatedStorage.MainEvent:FireServer("ShootGun", handle, origin, targetPos, nil, nil, Workspace:GetServerTimeNow())
-        
+        ReplicatedStorage.MainEvent:FireServer("ShootGun", handle, handle.Position, targetPos, nil, nil, Workspace:GetServerTimeNow())
         remote:FireServer()
     end
 end
 
--- Walkspeed
+-- Aim Bot Function
+local function DoAimBot()
+    if not State.AimBot then return end
+    if not State.AimBotTarget then return end
+    
+    local char = State.AimBotTarget.Character
+    if not char then return end
+    
+    local root = char:FindFirstChild(shared.Saved['A​i​m​ ​B​o​t']['H​i​t​ ​P​a​r​t']) or char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    
+    local targetPos = root.Position
+    
+    -- Apply prediction
+    if shared.Saved['A​i​m​ ​B​o​t']['P​r​e​d​i​c​t​i​o​n']['E​n​a​b​l​e​d'] then
+        local velocity = root.Velocity
+        targetPos = targetPos + Vector3.new(
+            velocity.X * shared.Saved['A​i​m​ ​B​o​t']['P​r​e​d​i​c​t​i​o​n']['X'],
+            velocity.Y * shared.Saved['A​i​m​ ​B​o​t']['P​r​e​d​i​c​t​i​o​n']['Y'],
+            velocity.Z * shared.Saved['A​i​m​ ​B​o​t']['P​r​e​d​i​c​t​i​o​n']['Z']
+        )
+    end
+    
+    local mousePos = UserInputService:GetMouseLocation()
+    local mouseDelta = (mousePos.X / Camera.ViewportSize.X - 0.5) * shared.Saved['A​i​m​ ​B​o​t']['S​e​n​s​i​t​i​v​i​t​y']
+    
+    local smoothing = shared.Saved['A​i​m​ ​B​o​t']['S​t​i​c​k​i​n​e​s​s']
+    local easedSmoothing = TweenService:GetValue(smoothing, Enum.EasingStyle[shared.Saved['A​i​m​ ​B​o​t']['E​a​s​i​n​g ​S​t​y​l​e']], Enum.EasingDirection[shared.Saved['A​i​m​ ​B​o​t']['E​a​s​i​n​g ​D​i​r​e​c​t​i​o​n']])
+    
+    Camera.CFrame = Camera.CFrame:Lerp(
+        CFrame.new(Camera.CFrame.Position, targetPos) * CFrame.Angles(0, mouseDelta, 0),
+        easedSmoothing
+    )
+end
+
+-- Trigger Bot Function
+local function DoTriggerBot()
+    if not State.TriggerBot then return end
+    if not State.TriggerBotTarget then return end
+    
+    local char = State.TriggerBotTarget.Character
+    if not char then return end
+    
+    local localChar = LocalPlayer.Character
+    if not localChar then return end
+    
+    local tool = localChar:FindFirstChildOfClass("Tool")
+    if not tool then return end
+    
+    -- Check cooldown
+    local lastShot = State.LastTriggerShot or 0
+    local currentTime = tick()
+    if currentTime - lastShot < shared.Saved['T​r​i​g​g​e​r​ ​B​o​t']['C​o​o​l​d​o​w​n'] then return end
+    
+    State.LastTriggerShot = currentTime
+    tool:Activate()
+end
+
+-- WalkSpeed Function
 local function UpdateWalkSpeed()
     local char = LocalPlayer.Character
     if not char then return end
@@ -493,32 +646,33 @@ local function UpdateWalkSpeed()
     local humanoid = char:FindFirstChildOfClass("Humanoid")
     if not humanoid then return end
     
-    if Config.WalkSpeedEnabled then
-        humanoid.WalkSpeed = Config.WalkSpeed
+    if State.WalkSpeed then
+        humanoid.WalkSpeed = shared.Saved['P​l​a​y​e​r​ ​M​o​d​i​f​i​c​a​t​i​o​n​s']['W​a​l​k​ ​S​p​e​e​d']['S​p​e​e​d']
     else
         humanoid.WalkSpeed = 16
     end
 end
 
 -- Input Handling
-AddConnection(UserInputService.InputBegan:Connect(function(input, processed)
+table.insert(State.Connections, UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
+    if shared.Saved['C​o​n​d​i​t​i​o​n​s']['C​h​a​t​ ​F​o​c​u​s​e​d'] and UserInputService:GetFocusedTextBox() then return end
     
-    -- Silent Aim Toggle (O)
-    if input.KeyCode == Config.SilentAimKey then
-        Config.SilentAim = not Config.SilentAim
-        if Config.SilentAim then
-            State.SilentAimTarget = GetClosestPlayer(1000)
+    -- Silent Aim (O)
+    if input.KeyCode == Enum.KeyCode[shared.Saved['G​e​n​e​r​a​l​']['​H​o​t​k​e​y​s​']['S​i​l​e​n​t​ ​A​i​m']:upper()] then
+        State.SilentAim = not State.SilentAim
+        if State.SilentAim then
+            State.SilentAimTarget = GetClosestPlayer(shared.Saved['S​i​l​e​n​t​ ​A​i​m']['M​a​x​ ​D​i​s​t​a​n​c​e'])
         else
             State.SilentAimTarget = nil
         end
         UpdateUI()
     end
     
-    -- Camlock Toggle (V)
-    if input.KeyCode == Config.CamlockKey then
-        Config.Camlock = not Config.Camlock
-        if Config.Camlock then
+    -- Camlock (V)
+    if input.KeyCode == Enum.KeyCode[shared.Saved['G​e​n​e​r​a​l​']['​H​o​t​k​e​y​s​']['C​a​m​l​o​c​k']:upper()] then
+        State.Camlock = not State.Camlock
+        if State.Camlock then
             State.CamlockTarget = GetClosestPlayer(1000)
         else
             State.CamlockTarget = nil
@@ -526,23 +680,60 @@ AddConnection(UserInputService.InputBegan:Connect(function(input, processed)
         UpdateUI()
     end
     
-    -- ESP Toggle (P)
-    if input.KeyCode == Config.ESPKey then
-        Config.ESP = not Config.ESP
+    -- Aim Bot (C)
+    if input.KeyCode == Enum.KeyCode[shared.Saved['G​e​n​e​r​a​l​']['​H​o​t​k​e​y​s​']['A​i​m​ ​B​o​t']:upper()] then
+        State.AimBot = not State.AimBot
+        if State.AimBot then
+            State.AimBotTarget = GetClosestPlayer(shared.Saved['A​i​m​ ​B​o​t']['F​O​V']['E​n​a​b​l​e​d'] and shared.Saved['A​i​m​ ​B​o​t']['F​O​V']['S​i​z​e'] or math.huge)
+        else
+            State.AimBotTarget = nil
+        end
         UpdateUI()
     end
     
-    -- WalkSpeed Toggle (G)
-    if input.KeyCode == Config.WalkSpeedKey then
-        Config.WalkSpeedEnabled = not Config.WalkSpeedEnabled
+    -- Trigger Bot (X)
+    if input.KeyCode == Enum.KeyCode[shared.Saved['G​e​n​e​r​a​l​']['​H​o​t​k​e​y​s​']['T​r​i​g​g​e​r​ ​B​o​t']:upper()] then
+        if shared.Saved['T​r​i​g​g​e​r​ ​B​o​t']['A​c​t​i​v​a​t​i​o​n']['T​y​p​e'] == 'Toggle' then
+            State.TriggerBot = not State.TriggerBot
+            if State.TriggerBot then
+                State.TriggerBotTarget = GetClosestPlayer(shared.Saved['T​r​i​g​g​e​r​ ​B​o​t']['M​a​x​ ​D​i​s​t​a​n​c​e'])
+            else
+                State.TriggerBotTarget = nil
+            end
+            UpdateUI()
+        elseif shared.Saved['T​r​i​g​g​e​r​ ​B​o​t']['A​c​t​i​v​a​t​i​o​n']['T​y​p​e'] == 'Hold' then
+            State.TriggerBot = true
+            State.TriggerBotTarget = GetClosestPlayer(shared.Saved['T​r​i​g​g​e​r​ ​B​o​t']['M​a​x​ ​D​i​s​t​a​n​c​e'])
+            UpdateUI()
+        end
+    end
+    
+    -- ESP (P)
+    if input.KeyCode == Enum.KeyCode[shared.Saved['G​e​n​e​r​a​l​']['​H​o​t​k​e​y​s​']['E​S​P']:upper()] then
+        State.ESP = not State.ESP
+        UpdateUI()
+    end
+    
+    -- Walk Speed (G)
+    if input.KeyCode == Enum.KeyCode[shared.Saved['G​e​n​e​r​a​l​']['​H​o​t​k​e​y​s​']['W​a​l​k​ ​S​p​e​e​d']:upper()] then
+        State.WalkSpeed = not State.WalkSpeed
         UpdateWalkSpeed()
         UpdateUI()
     end
 end))
 
--- Character added
-AddConnection(LocalPlayer.CharacterAdded:Connect(function(char)
-    -- Setup tool activation for silent aim
+table.insert(State.Connections, UserInputService.InputEnded:Connect(function(input)
+    if shared.Saved['T​r​i​g​g​e​r​ ​B​o​t']['A​c​t​i​v​a​t​i​o​n']['T​y​p​e'] == 'Hold' then
+        if input.KeyCode == Enum.KeyCode[shared.Saved['G​e​n​e​r​a​l​']['​H​o​t​k​e​y​s​']['T​r​i​g​g​e​r​ ​B​o​t']:upper()] then
+            State.TriggerBot = false
+            State.TriggerBotTarget = nil
+            UpdateUI()
+        end
+    end
+end))
+
+-- Character Setup
+table.insert(State.Connections, LocalPlayer.CharacterAdded:Connect(function(char)
     char.ChildAdded:Connect(function(child)
         if child:IsA("Tool") and child:FindFirstChild("RemoteEvent") then
             child.Activated:Connect(function()
@@ -551,12 +742,10 @@ AddConnection(LocalPlayer.CharacterAdded:Connect(function(char)
         end
     end)
     
-    -- Apply walkspeed
     task.wait(0.1)
     UpdateWalkSpeed()
 end))
 
--- Setup current character
 if LocalPlayer.Character then
     LocalPlayer.Character.ChildAdded:Connect(function(child)
         if child:IsA("Tool") and child:FindFirstChild("RemoteEvent") then
@@ -568,28 +757,31 @@ if LocalPlayer.Character then
 end
 
 -- Main Loop
-AddConnection(RunService.RenderStepped:Connect(function()
-    -- Update targets
-    if Config.SilentAim and not State.SilentAimTarget then
-        State.SilentAimTarget = GetClosestPlayer(1000)
-    elseif not Config.SilentAim then
-        State.SilentAimTarget = nil
+table.insert(State.Connections, RunService.RenderStepped:Connect(function()
+    -- Auto target selection
+    if State.SilentAim and not State.SilentAimTarget then
+        State.SilentAimTarget = GetClosestPlayer(shared.Saved['S​i​l​e​n​t​ ​A​i​m']['M​a​x​ ​D​i​s​t​a​n​c​e'])
     end
     
-    if Config.Camlock and not State.CamlockTarget then
+    if State.Camlock and not State.CamlockTarget then
         State.CamlockTarget = GetClosestPlayer(1000)
-    elseif not Config.Camlock then
-        State.CamlockTarget = nil
     end
     
-    -- Update features
+    if State.AimBot and not State.AimBotTarget then
+        State.AimBotTarget = GetClosestPlayer(shared.Saved['A​i​m​ ​B​o​t']['F​O​V']['E​n​a​b​l​e​d'] and shared.Saved['A​i​m​ ​B​o​t']['F​O​V']['S​i​z​e'] or math.huge)
+    end
+    
+    if State.TriggerBot and shared.Saved['T​r​i​g​g​e​r​ ​B​o​t']['S​e​l​e​c​t​i​o​n'] == 'Automatic' and not State.TriggerBotTarget then
+        State.TriggerBotTarget = GetClosestPlayer(shared.Saved['T​r​i​g​g​e​r​ ​B​o​t']['M​a​x​ ​D​i​s​t​a​n​c​e'])
+    end
+    
+    -- Run features
     DoCamlock()
+    DoAimBot()
+    DoTriggerBot()
     UpdateESP()
     UpdateUI()
 end))
 
--- Initial UI update
-UpdateUI()
-
 print("Hollow.cc Loaded Successfully!")
-print("Hotkeys: O=Silent Aim | V=Camlock | P=ESP | G=WalkSpeed")
+print("Hotkeys: O=Silent Aim | V=Camlock | C=Aim Bot | X=Trigger Bot | P=ESP | G=WalkSpeed")
