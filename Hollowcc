@@ -1,549 +1,265 @@
--- Clear old config on re-execute
-if shared.HollowCC_Config then
-    shared.HollowCC_Config = nil
-    shared.Saved = nil
-    for _, conn in ipairs(shared.HollowCC_Connections or {}) do
-        pcall(function() conn:Disconnect() end)
-    end
-    shared.HollowCC_Connections = {}
-    if shared.HollowCC_ESPFolder then
-        pcall(function() shared.HollowCC_ESPFolder:Destroy() end)
-    end
-    if shared.HollowCC_UI then
-        pcall(function() shared.HollowCC_UI:Destroy() end)
-    end
+-- Clear everything on re-execute
+if _G.HollowCC_Cleanup then
+    _G.HollowCC_Cleanup()
 end
-
-shared.HollowCC_Config = {
-    ['Auth_Key'] = '',
-    
-    ['UI'] = {
-        ['Title'] = 'Hollow.cc',
-        ['TitleColor'] = Color3.fromRGB(255, 140, 0), -- Orange
-        ['TextColor'] = Color3.fromRGB(255, 255, 255),
-        ['BackgroundEnabled'] = false, -- NO BACKGROUND
-        ['BackgroundColor'] = Color3.fromRGB(0, 0, 0),
-        ['BackgroundTransparency'] = 1, -- Fully transparent
-        ['Position'] = UDim2.new(1, -210, 0, 10), -- TOP RIGHT
-        ['ShowToggles'] = true,
-        ['Enabled'] = true,
-        ['TextBold'] = true -- BOLD TEXT
-    },
-    
-    ['Hotkeys'] = { 
-        ['Aim Bot'] = 'C', 
-        ['Walk Speed'] = 'G', 
-        ['Silent Aim'] = 'O', 
-        ['Double Tap'] = 'E', 
-        ['Trigger Bot'] = 'X',
-        ['Trigger Bot Target'] = 'Q', 
-        ['Silent Aim Target'] = 'Q', 
-        ['Hit Part Override'] = 'F', 
-        ['Inventory Sorter'] = 'R',
-        ['ESP'] = 'P',
-        ['Camlock'] = 'V'
-    },
-
-    ['Conditions'] = {
-        ['Player Protected'] = true,
-        ['Player Visible'] = true,
-        ['Player Grabbed'] = true,
-        ['Player Knocked'] = true,
-        ['Player Moving'] = false,
-        ['Tool Equipped'] = false,
-        ['Self Knocked'] = false,
-        ['Chat Focused'] = true,
-        ['Shift Locked'] = false,
-        ['Third Person'] = false,
-        ['First Person Camlock'] = true,
-        ['Third Person Camlock'] = false,
-        ['ShiftLock Camlock'] = true
-    },
-
-    ['Silent Aim'] = { 
-        ['Enabled'] = false,
-        ['Selection'] = 'Automatic',
-        ['Max Distance'] = math.huge,
-        ['YAxis'] = false,
-        ['HitChance'] = 100,
-        ['YStabilizer'] = 0,
-        ['Hit Part'] = 'Closest Point',
-        ['Closest Point'] = { ['Mode'] = 'Advanced', ['Scale'] = 0.15 },
-        ['Hit Part Override'] = { ['Enabled'] = false, 'Head' },
-        ['Prediction'] = { ['Enabled'] = false, ['Mode'] = 'Regular', ['Scale'] = 4.9, ['X'] = 0.13, ['Y'] = 0.13, ['Z'] = 0.13 },
-        ['Client Redirection'] = { ['Enabled'] = false, ['Weapons'] = { '[Revolver]', '[Silencer]', '[Glock]' } },
-        ['FOV'] = { 
-            ['Enabled'] = true, 
-            ['Visible'] = true,
-            ['Sync'] = false,
-            ['Type'] = 'Box',
-            ['Box'] = {7, 7},
-            ['3D'] = {5, 7, 5},
-            ['Circle'] = 150,
-            ['Hit Scan'] = math.huge,
-            ['Weapon Configs'] = { 
-                ['Enabled'] = false, 
-                ['Shotguns'] = { ['Circle'] = 150, ['Box'] = {5, 5} }, 
-                ['Pistols'] = { ['Circle'] = 150, ['Box'] = {4, 4} }, 
-                ['Others'] = { ['Circle'] = 15, ['Box'] = {2, 2} }, 
-            }            
-        }        
-    },
-    
-    ['Aim Bot'] = {
-        ['Enabled'] = false,
-        ['Hit Part'] = 'Head',
-        ['Closest Point'] = { ['Mode'] = 'Advanced', ['Scale'] = 0.93 },
-        ['Stickiness'] = 1,
-        ['Sensitivity'] = 2,
-        ['Easing Style'] = 'Circular',
-        ['Easing Direction'] = 'InOut',        
-        ['Prediction'] = { ['Enabled'] = true, ['X'] = 0.13, ['Y'] = 0.13, ['Z'] = 0.13 },
-        ['FOV'] = { ['Enabled'] = true, ['Size'] = 300 }
-    },
-
-    ['Camlock'] = {
-        ['Enabled'] = false,
-        ['Hit Part'] = 'Head',
-        ['Smoothness'] = 0.08, -- LOWER = SMOOTHER (0.01-0.2 range)
-        ['Prediction'] = { ['Enabled'] = true, ['X'] = 0.13, ['Y'] = 0.13, ['Z'] = 0.13 },
-        ['FOV'] = { ['Enabled'] = true, ['Size'] = 200 },
-        ['ShakeReduction'] = true -- Reduces shake near players
-    },
-
-    ['Trigger Bot'] = {
-        ['Enabled'] = false,
-        ['Selection'] = 'Automatic',
-        ['Max Distance'] = 250,
-        ['Radius'] = math.huge,
-        ['Cooldown'] = 0,
-        ['Activation'] = { ['Mode'] = 'Keybind', ['Type'] = 'Toggle' },
-        ['Prediction'] = { ['Enabled'] = false, 0.13 },
-        ['FOV'] = { ['Visible'] = false, ['X'] = 3.3, ['Y'] = 7, ['Z'] = 3.6 },
-    },
-    
-    ['ESP'] = {
-        ['Enabled'] = false,
-        ['Boxes'] = true,
-        ['Names'] = true,
-        ['Health'] = true,
-        ['Distance'] = true,
-        ['Tracers'] = false,
-        ['Team Check'] = false,
-        ['Max Distance'] = 1000,
-        ['Box Color'] = Color3.fromRGB(255, 140, 0), -- ORANGE
-        ['Tracer Color'] = Color3.fromRGB(255, 140, 0), -- ORANGE
-        ['TextColor'] = Color3.fromRGB(255, 140, 0) -- ORANGE
-    },
-    
-    ['Gun Modifications'] = {
-        ['Double Tap'] = { ['Enabled'] = false, { "[Revolver]", "[Silencer]"} },
-        ['Spread Modifier'] = {
-            ['Enabled'] = true,
-            ['Value'] = 0.8,
-            ['Randomizer'] = { ['Enabled'] = false, ['Value'] = math.random(0.1, 0.4) }
-        }
-    },
-
-    ['Player Modifications'] = {
-        ['No Jump Cooldown'] = false,
-        ['No Tripping'] = false,
-        ['Walk Speed'] = { 
-            ['Enabled'] = false, 
-            ['Speed'] = 23, -- DEFAULT WALKSPEED VALUE
-            ['Toggle'] = true -- Toggle mode
-        },
-    },    
-
-    ['Game Utilities'] = {
-        ['Inventory Helper'] = {
-            ['Enabled'] = false,
-            ['Order'] = {"[Double-Barrel SG]", "[Revolver]", "[TacticalShotgun]", "[Knife]"}
-        }
-    }
-}
-
-shared.Saved = shared.HollowCC_Config
 
 -- Services
-local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
-local Workspace = game.Workspace
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Self = Players.LocalPlayer
-local Mouse = Self:GetMouse()
+
+local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
-local GuiInsetOffsetY = game:GetService('GuiService'):GetGuiInset().Y
+local Mouse = LocalPlayer:GetMouse()
 
--- Script Tables
-shared.HollowCC_Connections = {}
-local Script = {
-    RBXConnections = shared.HollowCC_Connections,
-    Locals = {
-        IsSilentAiming = false,
-        IsCamlocking = false,
-        SilentAimTarget = nil,
-        AimAssistTarget = nil,
-        CamlockTarget = nil,
-        TriggerbotTarget = nil,
-        IsWalkSpeeding = false,
-        IsDoubleTapping = false,
-        TriggerState = false,
-        IsOverriding = false,
-        ESPObjects = {},
-        LastCamlockUpdate = 0,
-        CamlockSmoothing = Vector2.new(0, 0)
-    },
-    Visuals = {}
+-- Config
+local Config = {
+    -- Hotkeys
+    SilentAimKey = Enum.KeyCode.O,
+    CamlockKey = Enum.KeyCode.V,
+    ESPKey = Enum.KeyCode.P,
+    WalkSpeedKey = Enum.KeyCode.G,
+    
+    -- Settings
+    WalkSpeed = 23,
+    CamlockSmoothness = 0.08,
+    CamlockPrediction = 0.13,
+    
+    -- ESP
+    ESPColor = Color3.fromRGB(255, 140, 0), -- Orange
+    ESPMaxDistance = 1000,
+    
+    -- States
+    SilentAim = false,
+    Camlock = false,
+    ESP = false,
+    WalkSpeedEnabled = false,
 }
 
--- Weapon Info
-local WeaponInfo = {
-    Shotguns = {"[TacticalShotgun]", "[Shotgun]", "[Double-Barrel SG]"},
-    AutoShotguns = {"[Drum-Shotgun]"},
-    Pistols = {"[Revolver]", "[Silencer]", "[Glock]"},
-    Rifles = {"[AR]", "[SilencerAR]", "[AK47]", "[LMG]", "[DrumGun]"},
-    Bursts = {"[AUG]"},
-    SMG = {"[SMG]", "[P90]"},
-    Snipers = {"[Rifle]"},
-    Offsets = {
-        ["[Double-Barrel SG]"] = CFrame.new(0, 0.35, -2.2),
-        ["[TacticalShotgun]"] = CFrame.new(0, 0.25, -2.5),
-        ["[Drum-Shotgun]"] = CFrame.new(-0.1, 0.5, -2.5),
-        ["[Shotgun]"] = CFrame.new(0, 0.25, -2.5),
-        ["[Revolver]"] = CFrame.new(-1, 0.4, 0),
-        ["[Silencer]"] = CFrame.new(0, 0.4, 1.3),
-        ["[Glock]"] = CFrame.new(0.6, 0.25, 0),
-        ["[Rifle]"] = CFrame.new(0, 0.25, 2.5),
-        ["[AUG]"] = CFrame.new(-0.1, 0.4, 1.8),
-        ["[AR]"] = CFrame.new(2, 0.35, 0),
-        ["[SMG]"] = CFrame.new(0, 1, 0.5),
-        ["[LMG]"] = CFrame.new(0, 0.7, -3.8),
-        ["[P90]"] = CFrame.new(0, 0.2, -1.7),
-        ["[AK47]"] = CFrame.new(-0.1, 0.5, -2.5),
-        ["[SilencerAR]"] = CFrame.new(2.5, 0.35, 0),
-        ["[DrumGun]"] = CFrame.new(0, 0.4, 2.4)
-    },
-    Delays = {
-        ["[Double-Barrel SG]"] = 0.0595,
-        ["[TacticalShotgun]"] = 0.0095,
-        ["[Drum-Shotgun]"] = 0.415,
-        ["[Shotgun]"] = 1.2,
-        ["[Revolver]"] = 0.0095,
-        ["[Silencer]"] = 0.0095,
-        ["[Glock]"] = 0.0095,
-        ["[Rifle]"] = 1.3095,
-        ["[AUG]"] = 0.0095,
-        ["[AR]"] = 0.15,
-        ["[SMG]"] = 0.6,
-        ["[LMG]"] = 0.62,
-        ["[P90]"] = 0.6,
-        ["[AK47]"] = 0.15,
-        ["[SilencerAR]"] = 0.02
-    }
+-- State
+local State = {
+    SilentAimTarget = nil,
+    CamlockTarget = nil,
+    ESPObjects = {},
+    LastCamlockPos = nil,
+    CurrentCameraMode = "ThirdPerson"
 }
 
--- Create Hollow.cc UI
-local function CreateHollowUI()
-    if shared.HollowCC_UI then
-        pcall(function() shared.HollowCC_UI:Destroy() end)
+-- Cleanup function
+_G.HollowCC_Cleanup = function()
+    if State.ScreenGui then
+        State.ScreenGui:Destroy()
     end
-    
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "HollowCC_UI"
-    ScreenGui.ResetOnSpawn = false
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.Parent = game:GetService("CoreGui")
-    shared.HollowCC_UI = ScreenGui
-    
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 200, 0, 150)
-    MainFrame.Position = shared.HollowCC_Config['UI']['Position']
-    MainFrame.BackgroundColor3 = shared.HollowCC_Config['UI']['BackgroundColor']
-    MainFrame.BackgroundTransparency = shared.HollowCC_Config['UI']['BackgroundTransparency']
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Visible = shared.HollowCC_Config['UI']['Enabled']
-    MainFrame.Parent = ScreenGui
-    
-    local Title = Instance.new("TextLabel")
-    Title.Name = "Title"
-    Title.Size = UDim2.new(1, 0, 0, 22)
-    Title.Position = UDim2.new(0, 0, 0, 5)
-    Title.BackgroundTransparency = 1
-    Title.Text = shared.HollowCC_Config['UI']['Title']
-    Title.TextColor3 = shared.HollowCC_Config['UI']['TitleColor']
-    Title.TextSize = 18
-    Title.Font = shared.HollowCC_Config['UI']['TextBold'] and Enum.Font.SourceSansBold or Enum.Font.SourceSansSemibold
-    Title.TextXAlignment = Enum.TextXAlignment.Right
-    Title.Parent = MainFrame
-    
-    local UIPadding = Instance.new("UIPadding")
-    UIPadding.PaddingRight = UDim.new(0, 10)
-    UIPadding.Parent = Title
-    
-    local ContentFrame = Instance.new("Frame")
-    ContentFrame.Name = "Content"
-    ContentFrame.Size = UDim2.new(1, 0, 1, -30)
-    ContentFrame.Position = UDim2.new(0, 0, 0, 30)
-    ContentFrame.BackgroundTransparency = 1
-    ContentFrame.Parent = MainFrame
-    
-    local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Padding = UDim.new(0, 3)
-    UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    UIListLayout.Parent = ContentFrame
-    
-    local UIPaddingContent = Instance.new("UIPadding")
-    UIPaddingContent.PaddingRight = UDim.new(0, 10)
-    UIPaddingContent.PaddingTop = UDim.new(0, 5)
-    UIPaddingContent.Parent = ContentFrame
-    
-    return ScreenGui, MainFrame, ContentFrame
+    if State.ESPFolder then
+        State.ESPFolder:Destroy()
+    end
+    for _, conn in ipairs(State.Connections or {}) do
+        pcall(function() conn:Disconnect() end)
+    end
 end
 
-local HollowUI, HollowFrame, HollowContent = CreateHollowUI()
+State.Connections = {}
 
--- Update Hollow.cc UI
+-- Helper function
+local function AddConnection(conn)
+    table.insert(State.Connections, conn)
+end
+
+-- Create UI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HollowCC"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+ScreenGui.Parent = game:GetService("CoreGui")
+State.ScreenGui = ScreenGui
+
+-- Main UI Frame (No background)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "Main"
+MainFrame.Size = UDim2.new(0, 180, 0, 150)
+MainFrame.Position = UDim2.new(1, -190, 0, 10) -- Top right
+MainFrame.BackgroundTransparency = 1 -- No background
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(1, 0, 0, 25)
+Title.BackgroundTransparency = 1
+Title.Text = "Hollow.cc"
+Title.TextColor3 = Color3.fromRGB(255, 140, 0) -- Orange
+Title.TextSize = 20
+Title.Font = Enum.Font.SourceSansBold -- Bold
+Title.TextXAlignment = Enum.TextXAlignment.Right
+Title.Parent = MainFrame
+
+local TitlePadding = Instance.new("UIPadding")
+TitlePadding.PaddingRight = UDim.new(0, 10)
+TitlePadding.Parent = Title
+
+-- Status Container
+local StatusContainer = Instance.new("Frame")
+StatusContainer.Name = "Status"
+StatusContainer.Size = UDim2.new(1, 0, 1, -30)
+StatusContainer.Position = UDim2.new(0, 0, 0, 30)
+StatusContainer.BackgroundTransparency = 1
+StatusContainer.Parent = MainFrame
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Padding = UDim.new(0, 4)
+ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+ListLayout.Parent = StatusContainer
+
+local ContentPadding = Instance.new("UIPadding")
+ContentPadding.PaddingRight = UDim.new(0, 10)
+ContentPadding.Parent = StatusContainer
+
+-- Status Labels
 local StatusLabels = {}
-local function UpdateHollowUI()
-    if not shared.HollowCC_Config['UI']['Enabled'] then
-        HollowFrame.Visible = false
-        return
-    end
-    
-    HollowFrame.Visible = true
-    HollowFrame.Position = shared.HollowCC_Config['UI']['Position']
-    
-    -- Clear old labels
+
+local function UpdateUI()
+    -- Clear old
     for _, label in pairs(StatusLabels) do
         label:Destroy()
     end
     StatusLabels = {}
     
-    local Config = shared.HollowCC_Config
-    
-    -- Create status entries
-    local function AddStatus(name, enabled, target)
+    local function AddStatus(text, enabled, extra)
         local Label = Instance.new("TextLabel")
         Label.Size = UDim2.new(1, 0, 0, 18)
         Label.BackgroundTransparency = 1
         Label.TextSize = 14
-        Label.Font = Config['UI']['TextBold'] and Enum.Font.SourceSansBold or Enum.Font.SourceSans
+        Label.Font = Enum.Font.SourceSansBold -- Bold
         Label.TextXAlignment = Enum.TextXAlignment.Right
         
         local statusText = enabled and "ON" or "OFF"
-        local statusColor = enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        
-        if Config['UI']['ShowToggles'] then
-            if target and enabled then
-                Label.Text = name .. ": " .. statusText .. " | " .. target
-            else
-                Label.Text = name .. ": " .. statusText
-            end
-            Label.TextColor3 = Config['UI']['TextColor']
-        else
-            if target and enabled then
-                Label.Text = name .. ": " .. target
-            else
-                Label.Text = name .. ": " .. (enabled and "Active" or "None")
-            end
-            Label.TextColor3 = Config['UI']['TextColor']
+        local displayText = text .. ": " .. statusText
+        if extra and enabled then
+            displayText = displayText .. " | " .. extra
         end
         
-        Label.Parent = HollowContent
+        Label.Text = displayText
+        Label.TextColor3 = enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)
+        Label.Parent = StatusContainer
         table.insert(StatusLabels, Label)
     end
     
-    -- Add all statuses
-    AddStatus("Silent Aim", Script.Locals.IsSilentAiming, Script.Locals.SilentAimTarget and Script.Locals.SilentAimTarget.DisplayName or nil)
-    AddStatus("Camlock", Script.Locals.IsCamlocking, Script.Locals.CamlockTarget and Script.Locals.CamlockTarget.DisplayName or nil)
-    AddStatus("Triggerbot", Script.Locals.TriggerState, Script.Locals.TriggerbotTarget and Script.Locals.TriggerbotTarget.DisplayName or nil)
-    AddStatus("ESP", Config['ESP']['Enabled'], nil)
-    AddStatus("WalkSpeed", Script.Locals.IsWalkSpeeding, nil)
-    AddStatus("Double Tap", Script.Locals.IsDoubleTapping, nil)
+    AddStatus("Silent Aim", Config.SilentAim, State.SilentAimTarget and State.SilentAimTarget.DisplayName or nil)
+    AddStatus("Camlock", Config.Camlock, State.CamlockTarget and State.CamlockTarget.DisplayName or nil)
+    AddStatus("ESP", Config.ESP, nil)
+    AddStatus("WalkSpeed", Config.WalkSpeedEnabled, tostring(Config.WalkSpeed))
     
-    -- Adjust frame size
-    local contentHeight = #StatusLabels * 20 + 35
-    HollowFrame.Size = UDim2.new(0, 200, 0, contentHeight)
+    -- Adjust height
+    MainFrame.Size = UDim2.new(0, 180, 0, 30 + (#StatusLabels * 22))
 end
 
 -- ESP System
 local ESPFolder = Instance.new("Folder")
-ESPFolder.Name = "HollowCC_ESP"
-ESPFolder.Parent = game:GetService("CoreGui")
-shared.HollowCC_ESPFolder = ESPFolder
+ESPFolder.Name = "ESP"
+ESPFolder.Parent = ScreenGui
+State.ESPFolder = ESPFolder
 
-local function CreateESPObject(player)
-    local objects = {}
+local function CreateESP(player)
+    local esp = {}
     
-    if shared.HollowCC_Config['ESP']['Boxes'] then
-        local Box = Instance.new("Frame")
-        Box.Name = player.Name .. "_Box"
-        Box.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
-        Box.BackgroundTransparency = 0.8
-        Box.BorderSizePixel = 1
-        Box.BorderColor3 = Color3.new(0, 0, 0)
-        Box.Visible = false
-        Box.Parent = ESPFolder
-        objects.Box = Box
-        
-        local Corner1 = Instance.new("Frame")
-        Corner1.Size = UDim2.new(0, 6, 0, 2)
-        Corner1.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
-        Corner1.BorderSizePixel = 0
-        Corner1.Visible = false
-        Corner1.Parent = ESPFolder
-        objects.Corner1 = Corner1
-        
-        local Corner2 = Instance.new("Frame")
-        Corner2.Size = UDim2.new(0, 6, 0, 2)
-        Corner2.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
-        Corner2.BorderSizePixel = 0
-        Corner2.Visible = false
-        Corner2.Parent = ESPFolder
-        objects.Corner2 = Corner2
-        
-        local Corner3 = Instance.new("Frame")
-        Corner3.Size = UDim2.new(0, 2, 0, 6)
-        Corner3.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
-        Corner3.BorderSizePixel = 0
-        Corner3.Visible = false
-        Corner3.Parent = ESPFolder
-        objects.Corner3 = Corner3
-        
-        local Corner4 = Instance.new("Frame")
-        Corner4.Size = UDim2.new(0, 2, 0, 6)
-        Corner4.BackgroundColor3 = shared.HollowCC_Config['ESP']['Box Color']
-        Corner4.BorderSizePixel = 0
-        Corner4.Visible = false
-        Corner4.Parent = ESPFolder
-        objects.Corner4 = Corner4
+    -- Corner box (4 lines)
+    for i = 1, 4 do
+        local line = Instance.new("Frame")
+        line.BackgroundColor3 = Config.ESPColor
+        line.BorderSizePixel = 0
+        line.Visible = false
+        line.Parent = ESPFolder
+        esp["Line" .. i] = line
     end
     
-    if shared.HollowCC_Config['ESP']['Names'] then
-        local Name = Instance.new("TextLabel")
-        Name.Name = player.Name .. "_Name"
-        Name.BackgroundTransparency = 1
-        Name.TextColor3 = shared.HollowCC_Config['ESP']['TextColor']
-        Name.TextSize = 13
-        Name.Font = Enum.Font.SourceSansBold
-        Name.Visible = false
-        Name.Parent = ESPFolder
-        objects.Name = Name
-    end
+    -- Name
+    local name = Instance.new("TextLabel")
+    name.BackgroundTransparency = 1
+    name.TextColor3 = Config.ESPColor
+    name.TextSize = 13
+    name.Font = Enum.Font.SourceSansBold
+    name.Visible = false
+    name.Parent = ESPFolder
+    esp.Name = name
     
-    if shared.HollowCC_Config['ESP']['Health'] then
-        local HealthBarBG = Instance.new("Frame")
-        HealthBarBG.Name = player.Name .. "_HealthBarBG"
-        HealthBarBG.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        HealthBarBG.BorderSizePixel = 0
-        HealthBarBG.Visible = false
-        HealthBarBG.Parent = ESPFolder
-        objects.HealthBarBG = HealthBarBG
-        
-        local HealthBar = Instance.new("Frame")
-        HealthBar.Name = player.Name .. "_HealthBar"
-        HealthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-        HealthBar.BorderSizePixel = 0
-        HealthBar.Visible = false
-        HealthBar.Parent = ESPFolder
-        objects.HealthBar = HealthBar
-    end
+    -- Health bar
+    local healthBg = Instance.new("Frame")
+    healthBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    healthBg.BorderSizePixel = 0
+    healthBg.Visible = false
+    healthBg.Parent = ESPFolder
     
-    if shared.HollowCC_Config['ESP']['Tracers'] then
-        local Tracer = Drawing.new("Line")
-        Tracer.Color = shared.HollowCC_Config['ESP']['Tracer Color']
-        Tracer.Thickness = 1
-        Tracer.Visible = false
-        objects.Tracer = Tracer
-    end
+    local healthBar = Instance.new("Frame")
+    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    healthBar.BorderSizePixel = 0
+    healthBar.Visible = false
+    healthBar.Parent = ESPFolder
     
-    if shared.HollowCC_Config['ESP']['Distance'] then
-        local Distance = Instance.new("TextLabel")
-        Distance.Name = player.Name .. "_Distance"
-        Distance.BackgroundTransparency = 1
-        Distance.TextColor3 = shared.HollowCC_Config['ESP']['TextColor']
-        Distance.TextSize = 11
-        Distance.Font = Enum.Font.SourceSansBold
-        Distance.Visible = false
-        Distance.Parent = ESPFolder
-        objects.Distance = Distance
-    end
+    esp.HealthBg = healthBg
+    esp.HealthBar = healthBar
     
-    return objects
+    -- Distance
+    local dist = Instance.new("TextLabel")
+    dist.BackgroundTransparency = 1
+    dist.TextColor3 = Config.ESPColor
+    dist.TextSize = 11
+    dist.Font = Enum.Font.SourceSansBold
+    dist.Visible = false
+    dist.Parent = ESPFolder
+    dist.Text = ""
+    esp.Distance = dist
+    
+    return esp
 end
 
 local function UpdateESP()
-    if not shared.HollowCC_Config['ESP']['Enabled'] then
-        for _, obj in pairs(Script.Locals.ESPObjects) do
-            for _, visual in pairs(obj) do
-                if visual and typeof(visual) == "Instance" then
-                    visual.Visible = false
-                elseif visual and typeof(visual) == "table" and visual.Remove then
-                    visual.Visible = false
+    if not Config.ESP then
+        for _, esp in pairs(State.ESPObjects) do
+            for _, v in pairs(esp) do
+                if typeof(v) == "Instance" then
+                    v.Visible = false
                 end
             end
         end
         return
     end
     
-    local localPlayer = Self
-    local localCharacter = localPlayer.Character
-    if not localCharacter then return end
-    
-    local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
-    local localHumanoid = localCharacter:FindFirstChild("Humanoid")
-    if not localRoot or not localHumanoid then return end
+    local localChar = LocalPlayer.Character
+    if not localChar then return end
+    local localRoot = localChar:FindFirstChild("HumanoidRootPart")
+    if not localRoot then return end
     
     for _, player in ipairs(Players:GetPlayers()) do
-        if player == localPlayer then continue end
+        if player == LocalPlayer then continue end
         
-        if not Script.Locals.ESPObjects[player] then
-            Script.Locals.ESPObjects[player] = CreateESPObject(player)
+        if not State.ESPObjects[player] then
+            State.ESPObjects[player] = CreateESP(player)
         end
         
-        local objects = Script.Locals.ESPObjects[player]
-        local character = player.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        local humanoid = character and character:FindFirstChild("Humanoid")
+        local esp = State.ESPObjects[player]
+        local char = player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local humanoid = char and char:FindFirstChild("Humanoid")
+        local head = char and char:FindFirstChild("Head")
         
-        if not character or not root or not humanoid then
-            for _, obj in pairs(objects) do
-                if obj and typeof(obj) == "Instance" then
-                    obj.Visible = false
-                elseif obj and typeof(obj) == "table" and obj.Visible ~= nil then
-                    obj.Visible = false
+        if not char or not root or not humanoid or not head then
+            for _, v in pairs(esp) do
+                if typeof(v) == "Instance" then
+                    v.Visible = false
                 end
             end
             continue
         end
         
         local distance = (localRoot.Position - root.Position).Magnitude
-        if distance > shared.HollowCC_Config['ESP']['Max Distance'] then
-            for _, obj in pairs(objects) do
-                if obj and typeof(obj) == "Instance" then
-                    obj.Visible = false
-                elseif obj and typeof(obj) == "table" and obj.Visible ~= nil then
-                    obj.Visible = false
-                end
-            end
-            continue
-        end
-        
-        -- Get head and foot positions
-        local head = character:FindFirstChild("Head")
-        local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-        
-        if not head or not torso then
-            for _, obj in pairs(objects) do
-                if obj and typeof(obj) == "Instance" then
-                    obj.Visible = false
-                elseif obj and typeof(obj) == "table" and obj.Visible ~= nil then
-                    obj.Visible = false
+        if distance > Config.ESPMaxDistance then
+            for _, v in pairs(esp) do
+                if typeof(v) == "Instance" then
+                    v.Visible = false
                 end
             end
             continue
@@ -552,12 +268,10 @@ local function UpdateESP()
         local headPos = Camera:WorldToViewportPoint(head.Position)
         local footPos = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
         
-        if headPos.Z < 0 or footPos.Z < 0 then
-            for _, obj in pairs(objects) do
-                if obj and typeof(obj) == "Instance" then
-                    obj.Visible = false
-                elseif obj and typeof(obj) == "table" and obj.Visible ~= nil then
-                    obj.Visible = false
+        if headPos.Z < 0 then
+            for _, v in pairs(esp) do
+                if typeof(v) == "Instance" then
+                    v.Visible = false
                 end
             end
             continue
@@ -568,413 +282,136 @@ local function UpdateESP()
         local x = headPos.X - width / 2
         local y = headPos.Y
         
-        -- Update Box
-        if objects.Box then
-            objects.Box.Visible = true
-            objects.Box.Size = UDim2.new(0, width, 0, height)
-            objects.Box.Position = UDim2.new(0, x, 0, y)
-            
-            -- Update corners
-            if objects.Corner1 then
-                objects.Corner1.Visible = true
-                objects.Corner1.Position = UDim2.new(0, x, 0, y)
-            end
-            if objects.Corner2 then
-                objects.Corner2.Visible = true
-                objects.Corner2.Position = UDim2.new(0, x + width - 6, 0, y)
-            end
-            if objects.Corner3 then
-                objects.Corner3.Visible = true
-                objects.Corner3.Position = UDim2.new(0, x, 0, y)
-            end
-            if objects.Corner4 then
-                objects.Corner4.Visible = true
-                objects.Corner4.Position = UDim2.new(0, x + width - 2, 0, y)
-            end
-        end
+        -- Draw corner box
+        local lineThickness = 1
         
-        -- Update Name
-        if objects.Name then
-            objects.Name.Visible = true
-            objects.Name.Text = player.DisplayName
-            objects.Name.Position = UDim2.new(0, headPos.X - 50, 0, y - 20)
-            objects.Name.Size = UDim2.new(0, 100, 0, 15)
-        end
+        -- Top left
+        esp.Line1.Size = UDim2.new(0, width * 0.4, 0, lineThickness)
+        esp.Line1.Position = UDim2.new(0, x, 0, y)
+        esp.Line1.Visible = true
         
-        -- Update Health
-        if objects.HealthBar and objects.HealthBarBG then
-            local healthPercent = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
-            objects.HealthBarBG.Visible = true
-            objects.HealthBarBG.Size = UDim2.new(0, 4, 0, height)
-            objects.HealthBarBG.Position = UDim2.new(0, x - 8, 0, y)
-            
-            objects.HealthBar.Visible = true
-            objects.HealthBar.Size = UDim2.new(0, 4, 0, height * healthPercent)
-            objects.HealthBar.Position = UDim2.new(0, x - 8, 0, y + height * (1 - healthPercent))
-            objects.HealthBar.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
-        end
+        esp.Line2.Size = UDim2.new(0, lineThickness, 0, height * 0.4)
+        esp.Line2.Position = UDim2.new(0, x, 0, y)
+        esp.Line2.Visible = true
         
-        -- Update Tracer
-        if objects.Tracer then
-            objects.Tracer.Visible = true
-            local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-            local targetPos = Vector2.new(x + width / 2, y + height)
-            objects.Tracer.From = screenCenter
-            objects.Tracer.To = targetPos
-        end
+        -- Top right
+        esp.Line3.Size = UDim2.new(0, width * 0.4, 0, lineThickness)
+        esp.Line3.Position = UDim2.new(0, x + width * 0.6, 0, y)
+        esp.Line3.Visible = true
         
-        -- Update Distance
-        if objects.Distance then
-            objects.Distance.Visible = true
-            objects.Distance.Text = math.floor(distance) .. " studs"
-            objects.Distance.Position = UDim2.new(0, x, 0, y + height + 2)
-            objects.Distance.Size = UDim2.new(0, width, 0, 15)
+        esp.Line4.Size = UDim2.new(0, lineThickness, 0, height * 0.4)
+        esp.Line4.Position = UDim2.new(0, x + width - lineThickness, 0, y)
+        esp.Line4.Visible = true
+        
+        -- Bottom left
+        local line5 = esp["Line5"] or Instance.new("Frame")
+        if not esp["Line5"] then
+            line5.BackgroundColor3 = Config.ESPColor
+            line5.BorderSizePixel = 0
+            line5.Parent = ESPFolder
+            esp["Line5"] = line5
         end
+        line5.Size = UDim2.new(0, width * 0.4, 0, lineThickness)
+        line5.Position = UDim2.new(0, x, 0, y + height - lineThickness)
+        line5.Visible = true
+        
+        local line6 = esp["Line6"] or Instance.new("Frame")
+        if not esp["Line6"] then
+            line6.BackgroundColor3 = Config.ESPColor
+            line6.BorderSizePixel = 0
+            line6.Parent = ESPFolder
+            esp["Line6"] = line6
+        end
+        line6.Size = UDim2.new(0, lineThickness, 0, height * 0.4)
+        line6.Position = UDim2.new(0, x, 0, y + height * 0.6)
+        line6.Visible = true
+        
+        -- Bottom right
+        local line7 = esp["Line7"] or Instance.new("Frame")
+        if not esp["Line7"] then
+            line7.BackgroundColor3 = Config.ESPColor
+            line7.BorderSizePixel = 0
+            line7.Parent = ESPFolder
+            esp["Line7"] = line7
+        end
+        line7.Size = UDim2.new(0, width * 0.4, 0, lineThickness)
+        line7.Position = UDim2.new(0, x + width * 0.6, 0, y + height - lineThickness)
+        line7.Visible = true
+        
+        local line8 = esp["Line8"] or Instance.new("Frame")
+        if not esp["Line8"] then
+            line8.BackgroundColor3 = Config.ESPColor
+            line8.BorderSizePixel = 0
+            line8.Parent = ESPFolder
+            esp["Line8"] = line8
+        end
+        line8.Size = UDim2.new(0, lineThickness, 0, height * 0.4)
+        line8.Position = UDim2.new(0, x + width - lineThickness, 0, y + height * 0.6)
+        line8.Visible = true
+        
+        -- Name
+        esp.Name.Text = player.DisplayName
+        esp.Name.Position = UDim2.new(0, headPos.X - 50, 0, y - 20)
+        esp.Name.Size = UDim2.new(0, 100, 0, 15)
+        esp.Name.Visible = true
+        
+        -- Health bar
+        local healthPercent = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+        esp.HealthBg.Size = UDim2.new(0, 4, 0, height)
+        esp.HealthBg.Position = UDim2.new(0, x - 8, 0, y)
+        esp.HealthBg.Visible = true
+        
+        esp.HealthBar.Size = UDim2.new(0, 4, 0, height * healthPercent)
+        esp.HealthBar.Position = UDim2.new(0, x - 8, 0, y + height * (1 - healthPercent))
+        esp.HealthBar.BackgroundColor3 = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
+        esp.HealthBar.Visible = true
+        
+        -- Distance
+        esp.Distance.Text = math.floor(distance) .. " studs"
+        esp.Distance.Position = UDim2.new(0, x, 0, y + height + 2)
+        esp.Distance.Size = UDim2.new(0, width, 0, 15)
+        esp.Distance.Visible = true
     end
 end
 
--- Drawing Library
-do
-    local CustomLibIndex = 0
-    local UtilityUI = Instance.new('ScreenGui')
-    UtilityUI.Parent = game:GetService("CoreGui")
-    UtilityUI.IgnoreGuiInset = true
-    local Clamp = math.clamp
-    local LibraryMeta = {
-        Visible = true,
-        ZIndex = 0,
-        Transparency = 1,
-        Color = Color3.new(),
-        Remove = function(self) setmetatable(self, nil) end,
-        Destroy = function(self) setmetatable(self, nil) end
-    }
-
-    function Script.Visuals.new(ClassType)
-        CustomLibIndex += 1
-        if ClassType == 'Line' then
-            local LineObject = {
-                From = Vector2.zero,
-                To = Vector2.zero,
-                Thickness = 1
-            }
-            for k, v in pairs(LibraryMeta) do LineObject[k] = v end
-            
-            local Line = Instance.new('Frame')
-            Line.Name = CustomLibIndex
-            Line.AnchorPoint = Vector2.one * 0.5
-            Line.BorderSizePixel = 0
-            Line.BackgroundColor3 = LineObject.Color
-            Line.Visible = LineObject.Visible
-            Line.ZIndex = LineObject.ZIndex
-            Line.BackgroundTransparency = 1 - LineObject.Transparency
-            Line.Size = UDim2.new()
-            Line.Parent = UtilityUI
-
-            return setmetatable({}, {
-                __newindex = function(_, Property, Value)
-                    if Property == 'From' then
-                        local Direction = LineObject.To - Value
-                        local Center = (LineObject.To + Value) / 2
-                        local Magnitude = Direction.Magnitude
-                        local Theta = math.deg(math.atan2(Direction.Y, Direction.X))
-                        Line.Position = UDim2.fromOffset(Center.X, Center.Y)
-                        Line.Rotation = Theta
-                        Line.Size = UDim2.fromOffset(Magnitude, LineObject.Thickness)
-                    elseif Property == 'To' then
-                        local Direction = Value - LineObject.From
-                        local Center = (Value + LineObject.From) / 2
-                        local Magnitude = Direction.Magnitude
-                        local Theta = math.deg(math.atan2(Direction.Y, Direction.X))
-                        Line.Position = UDim2.fromOffset(Center.X, Center.Y)
-                        Line.Rotation = Theta
-                        Line.Size = UDim2.fromOffset(Magnitude, LineObject.Thickness)
-                    elseif Property == 'Thickness' then
-                        Line.Size = UDim2.fromOffset((LineObject.To - LineObject.From).Magnitude, Value)
-                    elseif Property == 'Visible' then
-                        Line.Visible = Value
-                    elseif Property == 'ZIndex' then
-                        Line.ZIndex = Value
-                    elseif Property == 'Transparency' then
-                        Line.BackgroundTransparency = 1 - Value
-                    elseif Property == 'Color' then
-                        Line.BackgroundColor3 = Value
-                    end
-                    LineObject[Property] = Value
-                end,
-                __index = function(self, index)
-                    if index == 'Remove' or index == 'Destroy' then
-                        return function()
-                            Line:Destroy()
-                            return LineObject:Remove()
-                        end
-                    end
-                    return LineObject[index]
-                end
-            })
-        elseif ClassType == 'Circle' then
-            local circleObj = {
-                Radius = 150,
-                Position = Vector2.zero,
-                Thickness = 0.7,
-                Filled = false
-            }
-            for k, v in pairs(LibraryMeta) do circleObj[k] = v end
-
-            local circleFrame = Instance.new('Frame')
-            local uiCorner = Instance.new('UICorner')
-            local uiStroke = Instance.new('UIStroke')
-            
-            circleFrame.Name = CustomLibIndex
-            circleFrame.AnchorPoint = Vector2.one * 0.5
-            circleFrame.BorderSizePixel = 0
-            circleFrame.BackgroundTransparency = circleObj.Filled and (1 - circleObj.Transparency) or 1
-            circleFrame.BackgroundColor3 = circleObj.Color
-            circleFrame.Visible = circleObj.Visible
-            circleFrame.ZIndex = circleObj.ZIndex
-            uiCorner.CornerRadius = UDim.new(1, 0)
-            circleFrame.Size = UDim2.fromOffset(circleObj.Radius, circleObj.Radius)
-            uiStroke.Thickness = circleObj.Thickness
-            uiStroke.Enabled = not circleObj.Filled
-            uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
-            circleFrame.Parent = UtilityUI
-            uiCorner.Parent = circleFrame
-            uiStroke.Parent = circleFrame
-
-            return setmetatable({}, {
-                __newindex = function(_, index, value)
-                    if index == 'Radius' then
-                        circleFrame.Size = UDim2.fromOffset(value * 2, value * 2)
-                    elseif index == 'Position' then
-                        circleFrame.Position = UDim2.fromOffset(value.X, value.Y)
-                    elseif index == 'Thickness' then
-                        uiStroke.Thickness = Clamp(value, 0.6, 0x7fffffff)
-                    elseif index == 'Filled' then
-                        circleFrame.BackgroundTransparency = circleObj.Filled and (1 - circleObj.Transparency) or 1
-                        uiStroke.Enabled = not value
-                    elseif index == 'Visible' then
-                        circleFrame.Visible = value
-                    elseif index == 'ZIndex' then
-                        circleFrame.ZIndex = value
-                    elseif index == 'Transparency' then
-                        circleFrame.BackgroundTransparency = circleObj.Filled and (1 - value) or 1
-                        uiStroke.Transparency = 1 - value
-                    elseif index == 'Color' then
-                        circleFrame.BackgroundColor3 = value
-                        uiStroke.Color = value
-                    end
-                    circleObj[index] = value
-                end,
-                __index = function(self, index)
-                    if index == 'Remove' or index == 'Destroy' then
-                        return function()
-                            circleFrame:Destroy()
-                            return circleObj:Remove()
-                        end
-                    end
-                    return circleObj[index]
-                end
-            })
-        elseif ClassType == 'Square' then
-            local squareObj = {
-                Size = Vector2.zero,
-                Position = Vector2.zero,
-                Thickness = 0.7,
-                Filled = false
-            }
-            for k, v in pairs(LibraryMeta) do squareObj[k] = v end
-
-            local squareFrame = Instance.new('Frame')
-            local uiStroke = Instance.new('UIStroke')
-            
-            squareFrame.Name = CustomLibIndex
-            squareFrame.BorderSizePixel = 0
-            squareFrame.BackgroundTransparency = 1
-            squareFrame.ZIndex = squareObj.ZIndex
-            squareFrame.BackgroundColor3 = squareObj.Color
-            squareFrame.Visible = squareObj.Visible
-            uiStroke.Thickness = squareObj.Thickness
-            uiStroke.Enabled = not squareObj.Filled
-            uiStroke.LineJoinMode = Enum.LineJoinMode.Miter
-
-            squareFrame.Parent = UtilityUI
-            uiStroke.Parent = squareFrame
-
-            return setmetatable({}, {
-                __newindex = function(_, index, value)
-                    if index == 'Size' then
-                        squareFrame.Size = UDim2.fromOffset(value.X, value.Y)
-                    elseif index == 'Position' then
-                        squareFrame.Position = UDim2.fromOffset(value.X, value.Y)
-                    elseif index == 'Thickness' then
-                        uiStroke.Thickness = Clamp(value, 0.6, 0x7fffffff)
-                    elseif index == 'Visible' then
-                        squareFrame.Visible = value
-                    elseif index == 'Transparency' then
-                        uiStroke.Transparency = 1 - value
-                    elseif index == 'Color' then
-                        uiStroke.Color = value
-                        squareFrame.BackgroundColor3 = value
-                    end
-                    squareObj[index] = value
-                end,
-                __index = function(self, index)
-                    if index == 'Remove' or index == 'Destroy' then
-                        return function()
-                            squareFrame:Destroy()
-                            return squareObj:Remove()
-                        end
-                    end
-                    return squareObj[index]
-                end
-            })
-        elseif ClassType == 'Text' then
-            local textObj = {
-                Text = '',
-                Font = Enum.Font.SourceSansBold,
-                Size = 0,
-                Position = Vector2.zero,
-                Center = false,
-                Outline = false,
-                OutlineColor = Color3.new()
-            }
-            for k, v in pairs(LibraryMeta) do textObj[k] = v end
-
-            local textLabel = Instance.new('TextLabel')
-            local uiStroke = Instance.new('UIStroke')
-            
-            textLabel.Name = CustomLibIndex
-            textLabel.AnchorPoint = Vector2.one * 0.5
-            textLabel.BorderSizePixel = 0
-            textLabel.BackgroundTransparency = 1
-            textLabel.RichText = true
-            textLabel.Visible = textObj.Visible
-            textLabel.TextColor3 = textObj.Color
-            textLabel.TextTransparency = 1 - textObj.Transparency
-            textLabel.ZIndex = textObj.ZIndex
-            textLabel.Font = Enum.Font.SourceSansBold
-            textLabel.TextSize = textObj.Size
-
-            textLabel:GetPropertyChangedSignal('TextBounds'):Connect(function()
-                local textBounds = textLabel.TextBounds
-                local offset = textBounds / 2
-                local offsetX = textObj.Center and 0 or offset.X
-                textLabel.Position = UDim2.fromOffset(textObj.Position.X + offsetX, textObj.Position.Y + offset.Y)
-            end)
-
-            uiStroke.Thickness = 1
-            uiStroke.Enabled = textObj.Outline
-            uiStroke.Color = textObj.Color
-
-            textLabel.Parent = UtilityUI
-            uiStroke.Parent = textLabel
-
-            return setmetatable({}, {
-                __newindex = function(_, index, value)
-                    if index == 'Text' then
-                        textLabel.Text = value
-                    elseif index == 'Size' then
-                        textLabel.TextSize = value
-                    elseif index == 'Position' then
-                        local offset = textLabel.TextBounds / 2
-                        local offsetX = textObj.Center and 0 or offset.X
-                        textLabel.Position = UDim2.fromOffset(textObj.Position.X + offsetX, textObj.Position.Y + offset.Y)
-                    elseif index == 'Center' then
-                        local position = value and Camera.ViewportSize / 2 or textObj.Position
-                        textLabel.Position = UDim2.fromOffset(position.X, position.Y)
-                    elseif index == 'Outline' then
-                        uiStroke.Enabled = value
-                    elseif index == 'OutlineColor' then
-                        uiStroke.Color = value
-                    elseif index == 'Visible' then
-                        textLabel.Visible = value
-                    elseif index == 'ZIndex' then
-                        textLabel.ZIndex = value
-                    elseif index == 'Transparency' then
-                        textLabel.TextTransparency = 1 - value
-                        uiStroke.Transparency = 1 - value
-                    elseif index == 'Color' then
-                        textLabel.TextColor3 = value
-                    end
-                    textObj[index] = value
-                end,
-                __index = function(self, index)
-                    if index == 'Remove' or index == 'Destroy' then
-                        return function()
-                            textLabel:Destroy()
-                            return textObj:Remove()
-                        end
-                    elseif index == 'TextBounds' then
-                        return textLabel.TextBounds
-                    end
-                    return textObj[index]
-                end
-            })
+-- Get Closest Player
+local function GetClosestPlayer(maxDist)
+    maxDist = maxDist or math.huge
+    local closest = nil
+    local minDist = maxDist
+    
+    local mousePos = UserInputService:GetMouseLocation()
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        
+        local char = player.Character
+        if not char then continue end
+        
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
+        
+        local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+        if not onScreen then continue end
+        
+        -- Checks
+        if char:FindFirstChild("Forcefield") then continue end
+        if char:FindFirstChildOfClass("Humanoid") and char:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
+        
+        local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+        if dist < minDist then
+            minDist = dist
+            closest = player
         end
     end
+    
+    return closest
 end
 
--- Game Detection
-local MarketplaceService = game:GetService("MarketplaceService")
-local Success, Info = pcall(function()
-    return MarketplaceService:GetProductInfo(game.PlaceId)
-end)
-local GameName = Success and Info.Name or "Universal"
-
-local function GameFunctions()
-    return {
-        IsKnocked = function(Player)
-            return Player and Player:FindFirstChild('BodyEffects') and 
-                   Player.BodyEffects['K.O'].Value or false
-        end,
-        IsGrabbed = function(Player)
-            return Player and Player.Character and Player.Character:FindFirstChild('GRABBING_CONSTRAINT') ~= nil
-        end,
-    }
-end
-
-local Games = {
-    ['Da Hood'] = { HoodGame = true, Functions = GameFunctions() },
-    ['Dee Hood'] = { HoodGame = true, Functions = GameFunctions() },
-    ['Der Hood'] = { HoodGame = true, Functions = GameFunctions() },
-    ['Dea Hood'] = { HoodGame = true, Functions = GameFunctions() },
-    ['Universal'] = { HoodGame = false, Functions = GameFunctions() }
-}
-
-local Match
-for Index in pairs(Games) do
-    if string.match(GameName, Index) then
-        Match = Index
-        break
-    end
-end
-local CurrentGame = Games[Match] or Games.Universal
-
--- Utility Functions
-local function ThreadLoop(Wait, Func)
-    task.spawn(function()
-        while true do
-            local Delta = task.wait(Wait)
-            local Success, Result = pcall(Func, Delta)
-            if not Success then
-                warn("Thread error:", Result)
-            elseif Result == "break" then
-                break
-            end
-        end
-    end)
-end
-
-local function RBXConnection(Signal, Callback)
-    local connection = Signal:Connect(Callback)
-    table.insert(Script.RBXConnections, connection)
-    return connection
-end
-
--- Camera Mode Check
+-- Check Camera Mode
 local function GetCameraMode()
     local zoom = (Camera.CFrame.Position - Camera.Focus.Position).Magnitude
-    local isFirstPerson = zoom < 1.5
+    local isFirstPerson = zoom < 2
     local isShiftLocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
     
     return {
@@ -984,650 +421,175 @@ local function GetCameraMode()
     }
 end
 
-local function ShouldCamlockWork()
+-- Camlock Function
+local function DoCamlock()
+    if not Config.Camlock then return end
+    if not State.CamlockTarget then return end
+    
+    local char = State.CamlockTarget.Character
+    if not char then return end
+    
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    
+    -- Check camera mode
     local mode = GetCameraMode()
-    local config = shared.HollowCC_Config['Conditions']
-    
-    -- If third person and NOT shift locked, don't work
     if mode.ThirdPerson and not mode.ShiftLocked then
-        return false
+        return -- Don't work in third person unless shift locked
     end
     
-    if mode.FirstPerson and config['First Person Camlock'] then
-        return true
-    end
+    -- Get target position
+    local targetPos = root.Position
+    local velocity = root.Velocity
     
-    if mode.ShiftLocked and config['ShiftLock Camlock'] then
-        return true
-    end
-    
-    return false
-end
-
--- Core Functions
-function Script:ValidateClient(Player)
-    local Object = Player.Character
-    local Humanoid = (Object and Object:FindFirstChild("Humanoid")) or false
-    local RootPart = (Humanoid and Humanoid.RootPart) or false
-    return Object, Humanoid, RootPart
-end
-
-function Script:GetOrigin(Origin)
-    local Object, Humanoid, RootPart = Script:ValidateClient(Self)
-    if Origin == 'Head' then
-        local Head = Object:FindFirstChild('Head')
-        if Head and Head:IsA('BasePart') then
-            return Head.CFrame.Position
-        end
-    elseif Origin == 'Torso' and RootPart then
-        return RootPart.CFrame.Position
-    end
-    return Workspace.CurrentCamera.CFrame.Position
-end
-
-function Script:RayCast(Part, Origin, Ignore, Distance)
-    Ignore = Ignore or {}
-    Distance = Distance or 2000
-    local Direction = (Part.Position - Origin).Unit * Distance
-    local Cast = Ray.new(Origin, Direction)
-    local Hit = Workspace:FindPartOnRayWithIgnoreList(Cast, Ignore)
-    return Hit and Hit:IsDescendantOf(Part.Parent), Hit
-end
-
-function Script:GetClosestPlayerToCursor(Max, FOV)
-    local CurrentCamera = Workspace.CurrentCamera
-    local MousePosition = UserInputService:GetMouseLocation()
-    local Closest
-    local Distance = Max or math.huge
-    FOV = FOV or math.huge
-
-    for _, Player in ipairs(Players:GetPlayers()) do
-        if Player == Self then continue end
-        
-        local Character = Player.Character
-        if not Character then continue end
-
-        local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
-        if not HumanoidRootPart then continue end
-
-        local Position, OnScreen = CurrentCamera:WorldToViewportPoint(HumanoidRootPart.Position)
-        if not OnScreen then continue end
-        
-        if shared.HollowCC_Config['Conditions']['Player Protected'] and Character:FindFirstChild("Forcefield") then
-            continue
-        end
-
-        if shared.HollowCC_Config['Conditions']['Player Moving'] then
-            local Humanoid = Character:FindFirstChildWhichIsA("Humanoid")
-            if Humanoid and Humanoid.MoveDirection.Magnitude < 0.001 then
-                continue
-            end
-        end
-
-        if shared.HollowCC_Config['Conditions']['Player Visible'] then
-            if not Script:RayCast(Character.HumanoidRootPart, Script:GetOrigin('Camera'), {Self.Character}) then
-                continue
-            end
-        end
-
-        if shared.HollowCC_Config['Conditions']['Player Knocked'] and CurrentGame.Functions.IsKnocked(Character) then
-            continue
-        end
-
-        if shared.HollowCC_Config['Conditions']['Self Knocked'] and CurrentGame.Functions.IsKnocked(Self.Character) then
-            continue
-        end
-
-        if shared.HollowCC_Config['Conditions']['Player Grabbed'] and CurrentGame.Functions.IsGrabbed(Player) then
-            continue
-        end
-
-        local Magnitude = (Vector2.new(Position.X, Position.Y) - MousePosition).Magnitude
-        if Magnitude < Distance and Magnitude < FOV then
-            Closest = Player
-            Distance = Magnitude
-        end
-    end
-    return Closest
-end
-
-function Script:GetClosestPartToCursor(Character)
-    local CurrentCamera = Workspace.CurrentCamera
-    local Closest
-    local Distance = 1/0
-    for _, Part in ipairs(Character:GetChildren()) do
-        if not Part:IsA("BasePart") then continue end
-
-        local Position = CurrentCamera:WorldToViewportPoint(Part.Position)
-        Position = Vector2.new(Position.X, Position.Y)
-        local Magnitude = (UserInputService:GetMouseLocation() - Position).Magnitude
-
-        if Magnitude < Distance then
-            Closest = Part
-            Distance = Magnitude
-        end
-    end
-    return Closest
-end
-
-function Script:GetClosestPointOnPart(Part, Scale)
-    local PartCFrame = Part.CFrame
-    local PartSize = Part.Size
-    local PartSizeTransformed = PartSize * (Scale / 2)
-
-    local MousePosition = UserInputService:GetMouseLocation()
-    local CurrentCamera = Workspace.CurrentCamera
-
-    local MouseRay = CurrentCamera:ViewportPointToRay(MousePosition.X, MousePosition.Y)
-    local Transformed = PartCFrame:PointToObjectSpace(MouseRay.Origin + (MouseRay.Direction * MouseRay.Direction:Dot(PartCFrame.Position - MouseRay.Origin)))
-
-    if Mouse.Target == Part then
-        return Vector3.new(Mouse.Hit.X, Mouse.Hit.Y, Mouse.Hit.Z)
-    end
-
-    return PartCFrame * Vector3.new(
-        math.clamp(Transformed.X, -PartSizeTransformed.X, PartSizeTransformed.X),
-        math.clamp(Transformed.Y, -PartSizeTransformed.Y, PartSizeTransformed.Y),
-        math.clamp(Transformed.Z, -PartSizeTransformed.Z, PartSizeTransformed.Z)
+    -- Apply prediction
+    targetPos = targetPos + Vector3.new(
+        velocity.X * Config.CamlockPrediction,
+        velocity.Y * Config.CamlockPrediction,
+        velocity.Z * Config.CamlockPrediction
     )
+    
+    -- Smooth camlock
+    local targetCF = CFrame.new(Camera.CFrame.Position, targetPos)
+    Camera.CFrame = Camera.CFrame:Lerp(targetCF, Config.CamlockSmoothness)
 end
 
-function Script:GetHitPosition(Mode)
-    if Mode == 'Assist' then
-        local Config = shared.HollowCC_Config['Aim Bot']
-        local Object = Script.Locals.AimAssistTarget.Character
-        if not Object then return end  
-
-        local Humanoid = Object:FindFirstChild("Humanoid")
-        if not Humanoid then return end 
-
-        local NearestPart = Script:GetClosestPartToCursor(Object)
-        local HitPosition
-
-        if Config['Hit Part'] == 'Closest Point' then
-            local NearestPoint
-            if Config['Closest Point']['Mode'] == 'Advanced' then
-                NearestPoint = Script:GetClosestPointOnPart(NearestPart, Config['Closest Point']['Scale'])
-            else
-                NearestPoint = Script:GetClosestPointOnPartBasic(NearestPart)
-            end
-            HitPosition = NearestPoint
-        elseif Config['Hit Part'] == 'Closest Part' then
-            HitPosition = NearestPart.Position
-        else
-            HitPosition = Object[Config['Hit Part']].Position
-        end
-
-        if Config['Prediction']['Enabled'] then
-            local BasePrediction = Vector3.new(Config['Prediction']['X'], Config['Prediction']['Y'], Config['Prediction']['Z'])
-            local Prediction = HitPosition + Object.HumanoidRootPart.Velocity * BasePrediction
-            return Prediction
-        else
-            return HitPosition
-        end
-    end
-
-    if Mode == 'Silent' then 
-        local Config = shared.HollowCC_Config['Silent Aim']
-        local Object = Script.Locals.SilentAimTarget.Character
-        if not Object then return end
-        
-        local Humanoid = Object:FindFirstChild("Humanoid")
-        if not Humanoid then return end
-        
-        local NearestPart = Script:GetClosestPartToCursor(Object)
-        local HitPosition
-        
-        local HitPart = Config['Hit Part']
-        if Config['Hit Part Override']['Enabled'] and Script.Locals.IsOverriding then
-            HitPart = Config['Hit Part Override'][1] 
-        end
-        
-        if HitPart == 'Closest Point' then
-            local NearestPoint
-            if Config['Closest Point']['Mode'] == 'Advanced' then
-                NearestPoint = Script:GetClosestPointOnPart(NearestPart, Config['Closest Point']['Scale'])
-            else
-                NearestPoint = Script:GetClosestPointOnPartBasic(NearestPart)
-            end
-            HitPosition = NearestPoint
-        elseif HitPart == 'Closest Part' then
-            HitPosition = NearestPart.Position
-        else
-            HitPosition = Object[HitPart].Position
-        end
-        
-        if Config['Prediction']['Enabled'] then
-            return HitPosition + Object.HumanoidRootPart.Velocity * Vector3.new(Config['Prediction']['X'], Config['Prediction']['Y'], Config['Prediction']['Z'])
-        else
-            return HitPosition
-        end
-    end
+-- Silent Aim Function
+local function DoSilentAim(tool)
+    if not Config.SilentAim then return end
+    if not State.SilentAimTarget then return end
     
-    if Mode == 'Camlock' then
-        local Config = shared.HollowCC_Config['Camlock']
-        local Object = Script.Locals.CamlockTarget.Character
-        if not Object then return nil
+    local char = State.SilentAimTarget.Character
+    if not char then return end
+    
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    
+    -- Fire remote with target position
+    local targetPos = root.Position + Vector3.new(0, 1, 0) -- Aim at upper body
+    
+    -- Get tool handle
+    local handle = tool:FindFirstChild("Handle")
+    if not handle then return end
+    
+    -- Fire the gun event
+    local remote = tool:FindFirstChild("RemoteEvent")
+    if remote then
+        remote:FireServer("Shoot")
         
-        local targetPart = Object:FindFirstChild(Config['Hit Part']) or Object:FindFirstChild("HumanoidRootPart")
-        if not targetPart then return nil
+        -- Fire main event
+        local origin = handle.Position
+        ReplicatedStorage.MainEvent:FireServer("ShootGun", handle, origin, targetPos, nil, nil, Workspace:GetServerTimeNow())
         
-        local HitPosition = targetPart.Position
-        
-        if Config['Prediction']['Enabled'] then
-            local velocity = targetPart.Velocity
-            HitPosition = HitPosition + Vector3.new(
-                velocity.X * Config['Prediction']['X'],
-                velocity.Y * Config['Prediction']['Y'],
-                velocity.Z * Config['Prediction']['Z']
-            )
-        end
-        
-        return HitPosition
+        remote:FireServer()
     end
 end
 
-function Script:GetGunCategory()
-    if Self and Self.Character then
-        local Tool = Self.Character:FindFirstChildWhichIsA("Tool")
-        if Tool then
-            if table.find(WeaponInfo.Shotguns, Tool.Name) then
-                return "Shotgun"
-            end
-            if table.find(WeaponInfo.Pistols, Tool.Name) then
-                return "Pistol"
-            end
-            if table.find(WeaponInfo.Rifles, Tool.Name) then
-                return "Rifle"
-            end
-            if table.find(WeaponInfo.Bursts, Tool.Name) then
-                return "Burst"
-            end
-            if table.find(WeaponInfo.SMG, Tool.Name) then
-                return "SMG"
-            end
-            if table.find(WeaponInfo.Snipers, Tool.Name) then
-                return "Sniper"
-            end
-            if table.find(WeaponInfo.AutoShotguns, Tool.Name) then
-                return "Auto"
-            end
-        end
-    end
-    return nil
-end
-
--- Gun System
-function Script:SilentAimFunc(Tool)
-    if not Tool then return end
+-- Walkspeed
+local function UpdateWalkSpeed()
+    local char = LocalPlayer.Character
+    if not char then return end
     
-    local Ticks = Script.Locals.LastShot or {}
-    if not Ticks[Tool.Name] then
-        Ticks[Tool.Name] = 0
-    end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
     
-    local Gun = Script:GetGunCategory()
-    if not Gun then return end
-    
-    local WeaponOffset = WeaponInfo.Offsets[Tool.Name]
-    local ToolHandle = Tool:WaitForChild("Handle")
-    local Cooldown = Tool:WaitForChild("ShootingCooldown").Value
-    local Ammo = Tool:WaitForChild("Ammo")
-    
-    if tick() - Ticks[Tool.Name] < Cooldown then return end
-    if Ammo.Value <= 0 then return end
-    
-    Ticks[Tool.Name] = tick()
-    Script.Locals.LastShot = Ticks
-    
-    if shared.HollowCC_Config['Silent Aim']['Enabled'] and Script.Locals.IsSilentAiming and Script.Locals.SilentAimTarget and Script.Locals.SilentAimTarget.Character then
-        local Target = Script.Locals.SilentAimTarget
-        local HitPosition = Script:GetHitPosition('Silent')
-        
-        local ToolEvent = Tool:WaitForChild("RemoteEvent", 2)
-        if ToolEvent then
-            ToolEvent:FireServer("Shoot")
-            
-            local ForcedOrigin = Tool:FindFirstChild("Default") and Tool.Default:FindFirstChild("Mesh") and Tool.Default.Mesh:FindFirstChild("Muzzle")
-            if ForcedOrigin then
-                local Origin = ForcedOrigin.WorldPosition
-                ReplicatedStorage.MainEvent:FireServer("ShootGun", ToolHandle, Origin, HitPosition, nil, nil, Workspace:GetServerTimeNow())
-            end
-            
-            ToolEvent:FireServer()
-        end
-    end
-end
-
-function Script:AimAssist()
-    local Enabled = shared.HollowCC_Config['Aim Bot']['Enabled'] 
-    if not Enabled then return end
-    if not Script.Locals.AimAssistTarget or not Script.Locals.AimAssistTarget.Character then return end
-    
-    local Player = Script.Locals.AimAssistTarget
-    local Character = Player.Character
-    
-    if shared.HollowCC_Config['Conditions']['Player Protected'] and Character:FindFirstChild("Forcefield") then return end
-    if shared.HollowCC_Config['Conditions']['Player Knocked'] and CurrentGame.Functions.IsKnocked(Character) then return end
-    if shared.HollowCC_Config['Conditions']['Self Knocked'] and CurrentGame.Functions.IsKnocked(Self.Character) then return end
-    if shared.HollowCC_Config['Conditions']['Player Grabbed'] and CurrentGame.Functions.IsGrabbed(Player) then return end
-    if shared.HollowCC_Config['Conditions']['Chat Focused'] and UserInputService:GetFocusedTextBox() then return end
-
-    local Config = shared.HollowCC_Config['Aim Bot'] 
-    local CurrentCamera = Workspace.CurrentCamera
-    local Center = Vector2.new(0.5, 0.5)
-    local MousePosition = UserInputService:GetMouseLocation()
-    local MouseDelta = (MousePosition.X / CurrentCamera.ViewportSize.X - Center.X) * Config['Sensitivity']
-
-    local Smoothing = Config['Stickiness']
-    local EasedSmoothing = TweenService:GetValue(Smoothing, Enum.EasingStyle[Config['Easing Style']], Enum.EasingDirection[Config['Easing Direction']])
-    local Hit = Script:GetHitPosition("Assist")
-
-    CurrentCamera.CFrame = CurrentCamera.CFrame:Lerp(
-        CFrame.new(CurrentCamera.CFrame.Position, Hit) * CFrame.Angles(0, MouseDelta, 0),
-        EasedSmoothing
-    )
-end
-
--- FIXED: Camlock Function with proper smoothing
-function Script:Camlock()
-    local Enabled = shared.HollowCC_Config['Camlock']['Enabled'] 
-    if not Enabled then return end
-    if not Script.Locals.IsCamlocking then return end
-    if not ShouldCamlockWork() then return end
-    if not Script.Locals.CamlockTarget or not Script.Locals.CamlockTarget.Character then return end
-    
-    local Player = Script.Locals.CamlockTarget
-    local Character = Player.Character
-    
-    if shared.HollowCC_Config['Conditions']['Player Protected'] and Character:FindFirstChild("Forcefield") then return end
-    if shared.HollowCC_Config['Conditions']['Player Knocked'] and CurrentGame.Functions.IsKnocked(Character) then return end
-    if shared.HollowCC_Config['Conditions']['Self Knocked'] and CurrentGame.Functions.IsKnocked(Self.Character) then return end
-    if shared.HollowCC_Config['Conditions']['Player Grabbed'] and CurrentGame.Functions.IsGrabbed(Player) then return end
-    if shared.HollowCC_Config['Conditions']['Chat Focused'] and UserInputService:GetFocusedTextBox() then return end
-
-    local Config = shared.HollowCC_Config['Camlock'] 
-    local HitPosition = Script:GetHitPosition("Camlock")
-    
-    if not HitPosition then return end
-
-    -- Calculate distance to target for shake reduction
-    local localRoot = Self.Character and Self.Character:FindFirstChild("HumanoidRootPart")
-    local targetRoot = Character:FindFirstChild("HumanoidRootPart")
-    if not localRoot or not targetRoot then return end
-    
-    local distance = (localRoot.Position - targetRoot.Position).Magnitude
-    
-    -- Adjust smoothness based on distance (closer = more smoothing to reduce shake)
-    local baseSmoothness = Config['Smoothness']
-    local adjustedSmoothness = baseSmoothness
-    
-    if Config['ShakeReduction'] then
-        if distance < 10 then
-            adjustedSmoothness = math.min(baseSmoothness * 2, 0.15) -- More smoothing when close
-        elseif distance < 30 then
-            adjustedSmoothness = baseSmoothness * 1.5
-        end
-    end
-    
-    -- Clamp smoothness
-    adjustedSmoothness = math.clamp(adjustedSmoothness, 0.01, 0.2)
-    
-    -- Apply smooth camlock
-    local targetCFrame = CFrame.new(Camera.CFrame.Position, HitPosition)
-    
-    -- Use lerp for smooth transition
-    Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, adjustedSmoothness)
-end
-
-function Script:Triggerbot()
-    local triggerBotConfig = shared.HollowCC_Config['Trigger Bot']
-    if not triggerBotConfig['Enabled'] then return end
-    if not Script.Locals.TriggerState then return end
-    if not Script.Locals.TriggerbotTarget or not Script.Locals.TriggerbotTarget.Character then return end
-    
-    local Target = Script.Locals.TriggerbotTarget
-    local Character = Target.Character
-    local SelfCharacter = Self.Character
-    
-    if shared.HollowCC_Config['Conditions']['Player Protected'] and Character:FindFirstChild("Forcefield") then return end
-    if shared.HollowCC_Config['Conditions']['Player Knocked'] and CurrentGame.Functions.IsKnocked(Character) then return end
-    if shared.HollowCC_Config['Conditions']['Self Knocked'] and CurrentGame.Functions.IsKnocked(SelfCharacter) then return end
-    
-    local Tool = SelfCharacter:FindFirstChildOfClass("Tool")
-    if not Tool or Tool.Name == '[Knife]' then return end
-    
-    local targetDistance = (SelfCharacter.HumanoidRootPart.Position - Character.HumanoidRootPart.Position).Magnitude
-    if targetDistance > triggerBotConfig['Max Distance'] then return end
-    
-    local currentTime = DateTime.now().UnixTimestampMillis
-    if currentTime - (Script.Locals.LastTriggerShot or 0) >= triggerBotConfig['Cooldown'] * 1000 then
-        Script.Locals.LastTriggerShot = currentTime
-        Tool:Activate()
-    end
-end
-
-function Script:Physics()
-    if not Self.Character then return end
-    
-    -- FIXED: Walkspeed with configurable speed and toggle
-    if shared.HollowCC_Config['Player Modifications']['Walk Speed']['Enabled'] and Script.Locals.IsWalkSpeeding then
-        local Object, Humanoid, RootPart = Script:ValidateClient(Self)
-        if Humanoid and RootPart then
-            local speed = shared.HollowCC_Config['Player Modifications']['Walk Speed']['Speed']
-            Humanoid.WalkSpeed = speed
-        end
-    elseif not Script.Locals.IsWalkSpeeding then
-        -- Reset to default when toggled off
-        local Object, Humanoid, RootPart = Script:ValidateClient(Self)
-        if Humanoid then
-            Humanoid.WalkSpeed = 16 -- Default walkspeed
-        end
-    end
-    
-    if shared.HollowCC_Config['Player Modifications']['No Tripping'] then
-        if Self.Character.Humanoid.Health > 1 and Self.Character.Humanoid:GetState() == Enum.HumanoidStateType.FallingDown then
-            Self.Character.Humanoid:ChangeState("GettingUp")
-        end
+    if Config.WalkSpeedEnabled then
+        humanoid.WalkSpeed = Config.WalkSpeed
+    else
+        humanoid.WalkSpeed = 16
     end
 end
 
 -- Input Handling
-RBXConnection(UserInputService.InputBegan, function(Input, Processed)
-    if Processed then return end
-    if shared.HollowCC_Config['Conditions']['Chat Focused'] and UserInputService:GetFocusedTextBox() then return end
+AddConnection(UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
     
-    local Config = shared.HollowCC_Config
-    
-    local SilentAimKey = Enum.KeyCode[Config['Hotkeys']['Silent Aim']:upper()]
-    local SilentAimTargetKey = Enum.KeyCode[Config['Hotkeys']['Silent Aim Target']:upper()]
-    local AimAssistKey = Enum.KeyCode[Config['Hotkeys']['Aim Bot']:upper()]
-    local WalkSpeedKey = Enum.KeyCode[Config['Hotkeys']['Walk Speed']:upper()]
-    local DoubleTapKey = Enum.KeyCode[Config['Hotkeys']['Double Tap']:upper()]
-    local TriggerBotTargetKey = Enum.KeyCode[Config['Hotkeys']['Trigger Bot Target']:upper()]
-    local HitPartOverrideKey = Enum.KeyCode[Config['Hotkeys']['Hit Part Override']:upper()]
-    local ESPKey = Enum.KeyCode[Config['Hotkeys']['ESP']:upper()]
-    local CamlockKey = Enum.KeyCode[Config['Hotkeys']['Camlock']:upper()]
-    
-    -- Silent Aim Toggle
-    if Input.KeyCode == SilentAimKey then
-        Script.Locals.IsSilentAiming = not Script.Locals.IsSilentAiming
-    end
-    
-    -- Camlock Toggle
-    if Input.KeyCode == CamlockKey then
-        Script.Locals.IsCamlocking = not Script.Locals.IsCamlocking
-        if Script.Locals.IsCamlocking then
-            Script.Locals.CamlockTarget = Script:GetClosestPlayerToCursor(
-                Config['Camlock']['FOV']['Enabled'] and Config['Camlock']['FOV']['Size'] or math.huge,
-                math.huge
-            )
+    -- Silent Aim Toggle (O)
+    if input.KeyCode == Config.SilentAimKey then
+        Config.SilentAim = not Config.SilentAim
+        if Config.SilentAim then
+            State.SilentAimTarget = GetClosestPlayer(1000)
         else
-            Script.Locals.CamlockTarget = nil
+            State.SilentAimTarget = nil
         end
+        UpdateUI()
     end
     
-    -- ESP Toggle
-    if Input.KeyCode == ESPKey then
-        Config['ESP']['Enabled'] = not Config['ESP']['Enabled']
-    end
-    
-    -- Hit Part Override
-    if Input.KeyCode == HitPartOverrideKey then
-        Script.Locals.IsOverriding = not Script.Locals.IsOverriding
-    end
-    
-    -- Silent Aim Target
-    if Input.KeyCode == SilentAimTargetKey and Config['Silent Aim']['Selection'] == 'Target' then
-        if not Script.Locals.IsSilentAiming then
-            Script.Locals.IsSilentAiming = true
-            Script.Locals.SilentAimTarget = Script:GetClosestPlayerToCursor(
-                Config['Silent Aim']['Max Distance'] * 100,
-                Config['Silent Aim']['FOV']['Enabled'] and Config['Silent Aim']['FOV']['Circle'] or math.huge
-            )    
+    -- Camlock Toggle (V)
+    if input.KeyCode == Config.CamlockKey then
+        Config.Camlock = not Config.Camlock
+        if Config.Camlock then
+            State.CamlockTarget = GetClosestPlayer(1000)
         else
-            Script.Locals.IsSilentAiming = false
-            Script.Locals.SilentAimTarget = nil
+            State.CamlockTarget = nil
         end
+        UpdateUI()
     end
     
-    -- Trigger Bot Target
-    if Input.KeyCode == TriggerBotTargetKey and Config['Trigger Bot']['Selection'] == 'Target' then
-        if not Script.Locals.TriggerState then
-            Script.Locals.TriggerState = true
-            Script.Locals.TriggerbotTarget = Script:GetClosestPlayerToCursor(
-                Config['Trigger Bot']['Max Distance'] * 100,
-                Config['Trigger Bot']['Radius'] * 5
-            )  
-        else
-            Script.Locals.TriggerState = false
-            Script.Locals.TriggerbotTarget = nil
-        end
+    -- ESP Toggle (P)
+    if input.KeyCode == Config.ESPKey then
+        Config.ESP = not Config.ESP
+        UpdateUI()
     end
     
-    -- Aim Assist
-    if Input.KeyCode == AimAssistKey then
-        if not Script.Locals.AimAssistTarget then
-            Script.Locals.AimAssistTarget = Script:GetClosestPlayerToCursor(
-                Config['Silent Aim']['Max Distance'] * 100,
-                Config['Aim Bot']['FOV']['Enabled'] and Config['Aim Bot']['FOV']['Size'] or math.huge
-            )
-        else
-            Script.Locals.AimAssistTarget = nil
-        end
+    -- WalkSpeed Toggle (G)
+    if input.KeyCode == Config.WalkSpeedKey then
+        Config.WalkSpeedEnabled = not Config.WalkSpeedEnabled
+        UpdateWalkSpeed()
+        UpdateUI()
     end
-    
-    -- Walk Speed Toggle
-    if Input.KeyCode == WalkSpeedKey then
-        Script.Locals.IsWalkSpeeding = not Script.Locals.IsWalkSpeeding
-        -- Toggle the enabled state in config too
-        Config['Player Modifications']['Walk Speed']['Enabled'] = Script.Locals.IsWalkSpeeding
-    end
-    
-    -- Double Tap
-    if Input.KeyCode == DoubleTapKey then
-        Script.Locals.IsDoubleTapping = not Script.Locals.IsDoubleTapping
-    end
-    
-    -- Trigger Bot Activation
-    local triggerKey = Config['Hotkeys']['Trigger Bot']
-    if Config['Trigger Bot']['Activation']['Mode'] == 'Keybind' then
-        local success, keyCode = pcall(function()
-            return Enum.KeyCode[triggerKey:upper()]
-        end)
-        if success and Input.KeyCode == keyCode then
-            if Config['Trigger Bot']['Activation']['Type'] == "Toggle" then
-                Script.Locals.TriggerState = not Script.Locals.TriggerState
-            elseif Config['Trigger Bot']['Activation']['Type'] == "Hold" then
-                Script.Locals.TriggerState = true
-            end
-        end
-    end
-    
-    if Input.KeyCode == Enum.KeyCode.LeftControl then
-        Script.Locals.CanTriggerbotShoot = false
-    end
-end)
+end))
 
-RBXConnection(UserInputService.InputEnded, function(Input)
-    local Config = shared.HollowCC_Config
-    local triggerKey = Config['Hotkeys']['Trigger Bot']
-    
-    if Config['Trigger Bot']['Activation']['Type'] == "Hold" and Config['Trigger Bot']['Activation']['Mode'] == 'Keybind' then
-        local success, keyCode = pcall(function()
-            return Enum.KeyCode[triggerKey:upper()]
-        end)
-        if success and Input.KeyCode == keyCode then
-            Script.Locals.TriggerState = false
+-- Character added
+AddConnection(LocalPlayer.CharacterAdded:Connect(function(char)
+    -- Setup tool activation for silent aim
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") and child:FindFirstChild("RemoteEvent") then
+            child.Activated:Connect(function()
+                DoSilentAim(child)
+            end)
         end
-    end
-    
-    if Input.KeyCode == Enum.KeyCode.LeftControl then
-        Script.Locals.CanTriggerbotShoot = true
-    end
-end)
-
--- Character Setup
-local Activated
-local function OnLocalCharacterAdded(Character)
-    if not Character then return end
-    
-    Character.ChildAdded:Connect(function(Tool)
-        if not Tool:IsA("Tool") then return end
-        Activated = Tool.Activated:Connect(function()
-            Script:SilentAimFunc(Tool)
-        end)
     end)
     
-    Character.ChildRemoved:Connect(function(Tool)
-        if not Tool:IsA("Tool") then return end
-        if Activated then
-            Activated:Disconnect()
+    -- Apply walkspeed
+    task.wait(0.1)
+    UpdateWalkSpeed()
+end))
+
+-- Setup current character
+if LocalPlayer.Character then
+    LocalPlayer.Character.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") and child:FindFirstChild("RemoteEvent") then
+            child.Activated:Connect(function()
+                DoSilentAim(child)
+            end)
         end
     end)
 end
 
-OnLocalCharacterAdded(Self.Character)
-Self.CharacterAdded:Connect(OnLocalCharacterAdded)
-
--- Main Render Loop
-RBXConnection(RunService.PreRender, function()
-    local Config = shared.HollowCC_Config
-    
-    -- Auto target selection
-    if Config['Silent Aim']['Selection'] == 'Automatic' and Script.Locals.IsSilentAiming then
-        Script.Locals.SilentAimTarget = Script:GetClosestPlayerToCursor(
-            Config['Silent Aim']['Max Distance'] * 100,
-            Config['Silent Aim']['FOV']['Hit Scan']
-        )    
+-- Main Loop
+AddConnection(RunService.RenderStepped:Connect(function()
+    -- Update targets
+    if Config.SilentAim and not State.SilentAimTarget then
+        State.SilentAimTarget = GetClosestPlayer(1000)
+    elseif not Config.SilentAim then
+        State.SilentAimTarget = nil
     end
     
-    if Config['Trigger Bot']['Selection'] == 'Automatic' and Script.Locals.TriggerState then
-        Script.Locals.TriggerbotTarget = Script:GetClosestPlayerToCursor(
-            Config['Trigger Bot']['Max Distance'] * 100,
-            Config['Trigger Bot']['Radius'] * 5
-        ) 
+    if Config.Camlock and not State.CamlockTarget then
+        State.CamlockTarget = GetClosestPlayer(1000)
+    elseif not Config.Camlock then
+        State.CamlockTarget = nil
     end
     
-    -- Auto camlock target selection
-    if Script.Locals.IsCamlocking and not Script.Locals.CamlockTarget then
-        Script.Locals.CamlockTarget = Script:GetClosestPlayerToCursor(
-            Config['Camlock']['FOV']['Enabled'] and Config['Camlock']['FOV']['Size'] or math.huge,
-            math.huge
-        )
-    end
-    
-    -- Update Hollow.cc UI
-    UpdateHollowUI()
-    
-    -- Update ESP
+    -- Update features
+    DoCamlock()
     UpdateESP()
-    
-    -- Run features
-    Script:AimAssist()
-    Script:Camlock()
-    Script:Triggerbot()
-    Script:Physics()
-end)
+    UpdateUI()
+end))
 
-print("Hollow.cc Loaded | Da Hood Script")
+-- Initial UI update
+UpdateUI()
+
+print("Hollow.cc Loaded Successfully!")
+print("Hotkeys: O=Silent Aim | V=Camlock | P=ESP | G=WalkSpeed")
