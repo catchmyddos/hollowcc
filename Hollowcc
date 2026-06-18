@@ -1,6 +1,23 @@
 --[[
-    Shoomedaware - Config Front Build (Re-Execute Fixed)
+    Vice.cc - Config Front Build (Re-Execute Fixed)
 ]]
+
+-- ============================================
+-- GAME ID CONFIGURATION (ADD YOUR GAME HERE)
+-- ============================================
+-- To add support for your game:
+-- 1. Add your PlaceId to the table below
+-- 2. Add the game config to GameConfigs table below
+-- 3. Set the paths for buypads if you want auto-buy weapons
+
+local SupportedGameIDs = {
+    112635921505109, -- Default game 1
+    94025855507158,  -- Default game 2
+    78790821242332,  -- Default game 3
+    75159825516372,  -- Da Track (has bots)
+    -- ADD YOUR GAME ID HERE, for example:
+    -- 123456789,
+}
 
 -- ============================================
 -- DEFAULT CONFIG (EDIT THIS SECTION)
@@ -35,7 +52,7 @@ local UserConfig = {
         WallCheck = true,
         ForceFieldCheck = true,
         VisibleCheck = true,
-        KatanaCheck = false,
+        -- KatanaCheck removed
     },
     
     ESPSettings = {
@@ -62,7 +79,7 @@ local UserConfig = {
             ShowMaxHealth = true,
             ShowUsername = true,
             Colors = {
-                ShoomedawareColor = Color3.fromRGB(0, 255, 0),
+                ViceColor = Color3.fromRGB(0, 255, 0),
                 Color = Color3.fromRGB(255, 255, 255),
                 TargetColor = Color3.fromRGB(255, 0, 0),
                 ToggledOnColor = Color3.fromRGB(255, 50, 50)
@@ -200,24 +217,37 @@ local UserConfig = {
 }
 
 -- ============================================
+-- INITIAL TOGGLE STATES (DO NOT EDIT)
+-- ============================================
+-- This stores what features were initially enabled
+-- If false in config above, toggle keys won't work
+local InitialToggleStates = {
+    SilentAim = UserConfig.SilentAim.Enabled,
+    AimAssist = UserConfig.AimAssist.Enabled,
+    TriggerBot = UserConfig.TriggerBot.Enabled,
+    ESP = UserConfig.ESPSettings.Enabled,
+    AutoBuy = false, -- Always starts false
+}
+
+-- ============================================
 -- RE-EXECUTION HANDLER (CLEANUP OLD INSTANCE)
 -- ============================================
 
 local function CleanupOldInstance()
-    if _G.ShoomedawareActiveConnections then
-        for _, conn in ipairs(_G.ShoomedawareActiveConnections) do
+    if _G.ViceActiveConnections then
+        for _, conn in ipairs(_G.ViceActiveConnections) do
             pcall(function() conn:Disconnect() end)
         end
     end
     
-    if _G.ShoomedawareActiveDrawings then
-        for _, drawing in ipairs(_G.ShoomedawareActiveDrawings) do
+    if _G.ViceActiveDrawings then
+        for _, drawing in ipairs(_G.ViceActiveDrawings) do
             pcall(function() drawing:Remove() end)
         end
     end
     
-    if _G.ShoomedawareESPObjects then
-        for _, objData in pairs(_G.ShoomedawareESPObjects) do
+    if _G.ViceESPObjects then
+        for _, objData in pairs(_G.ViceESPObjects) do
             if typeof(objData) == "table" then
                 for _, drawing in pairs(objData) do
                     pcall(function() drawing:Remove() end)
@@ -226,8 +256,8 @@ local function CleanupOldInstance()
         end
     end
     
-    if _G.ShoomedawareInfoObjects then
-        for _, obj in pairs(_G.ShoomedawareInfoObjects) do
+    if _G.ViceInfoObjects then
+        for _, obj in pairs(_G.ViceInfoObjects) do
             if typeof(obj) == "table" then
                 for _, drawing in pairs(obj) do
                     pcall(function() drawing:Remove() end)
@@ -236,24 +266,24 @@ local function CleanupOldInstance()
         end
     end
     
-    if _G.ShoomedawareFOVBoxes then
-        for _, box in pairs(_G.ShoomedawareFOVBoxes) do
+    if _G.ViceFOVBoxes then
+        for _, box in pairs(_G.ViceFOVBoxes) do
             pcall(function() box:Remove() end)
         end
     end
     
-    _G.Shoomedaware = nil
-    _G.ShoomedawareUserConfig = nil
-    _G.ShoomedawareActiveConnections = nil
-    _G.ShoomedawareActiveDrawings = nil
-    _G.ShoomedawareESPObjects = nil
-    _G.ShoomedawareInfoObjects = nil
-    _G.ShoomedawareFOVBoxes = nil
-    _G.ShoomedawareActive = nil
+    _G.Vice = nil
+    _G.ViceUserConfig = nil
+    _G.ViceActiveConnections = nil
+    _G.ViceActiveDrawings = nil
+    _G.ViceESPObjects = nil
+    _G.ViceInfoObjects = nil
+    _G.ViceFOVBoxes = nil
+    _G.ViceActive = nil
 end
 
-if _G.ShoomedawareLoaded then
-    print("🔄 Shoomedaware: Cleaning up old instance...")
+if _G.ViceLoaded then
+    print("🔄 Vice.cc: Cleaning up old instance...")
     CleanupOldInstance()
     task.wait(0.1)
 end
@@ -262,19 +292,19 @@ end
 -- EXTERNAL CONFIG CHECK (OVERRIDES DEFAULT)
 -- ============================================
 
-if getgenv().ShoomedawareExternalConfig then
-    UserConfig = getgenv().ShoomedawareExternalConfig
-    print("✅ Shoomedaware: Using EXTERNAL config from getgenv()")
-    getgenv().ShoomedawareExternalConfig = nil
+if getgenv().ViceExternalConfig then
+    UserConfig = getgenv().ViceExternalConfig
+    print("✅ Vice.cc: Using EXTERNAL config from getgenv()")
+    getgenv().ViceExternalConfig = nil
 else
-    print("✅ Shoomedaware: Using DEFAULT config")
+    print("✅ Vice.cc: Using DEFAULT config")
 end
 
-_G.Shoomedaware = UserConfig
-_G.ShoomedawareUserConfig = UserConfig
+_G.Vice = UserConfig
+_G.ViceUserConfig = UserConfig
 
-print("✅ Shoomedaware: Fresh config loaded")
-local Shoomedaware = _G.Shoomedaware
+print("✅ Vice.cc: Fresh config loaded")
+local Vice = _G.Vice
 
 -- ============================================
 -- SERVICES & VARIABLES
@@ -326,12 +356,12 @@ pcall(function() CachedMouse = LocalPlayer:GetMouse() end)
 local ActiveConnections = {}
 local ActiveDrawings = {}
 
-_G.ShoomedawareActiveConnections = ActiveConnections
-_G.ShoomedawareActiveDrawings = ActiveDrawings
-_G.ShoomedawareESPObjects = {}
-_G.ShoomedawareInfoObjects = {}
-_G.ShoomedawareFOVBoxes = {}
-_G.ShoomedawareActive = true
+_G.ViceActiveConnections = ActiveConnections
+_G.ViceActiveDrawings = ActiveDrawings
+_G.ViceESPObjects = {}
+_G.ViceInfoObjects = {}
+_G.ViceFOVBoxes = {}
+_G.ViceActive = true
 
 -- ============================================
 -- UTILITY FUNCTIONS
@@ -350,7 +380,7 @@ end
 local function Notify(text)
     pcall(function()
         StarterGui:SetCore("SendNotification", {
-            Title = "Shoomedaware",
+            Title = "Vice.cc",
             Text = text,
             Duration = 2,
         })
@@ -358,36 +388,42 @@ local function Notify(text)
 end
 
 local function GetBind(feature)
-    if not Shoomedaware or not Shoomedaware.General or not Shoomedaware.General.Binds then
+    if not Vice or not Vice.General or not Vice.General.Binds then
         return "?"
     end
-    local bind = Shoomedaware.General.Binds[feature]
+    local bind = Vice.General.Binds[feature]
     return bind and tostring(bind):upper() or "?"
 end
 
 -- ============================================
--- GAME CONFIGS
+-- GAME CONFIGS (ADD YOUR GAME CONFIG HERE)
 -- ============================================
 
 local GameConfigs = {
     [112635921505109] = {
         buypadsPath = { "MAP", "Pads" },
-        allowedpads = { "[USP]", "[Tactical Shotgun]", "[Medium Armor]" },
+        allowedpads = { "[USP]", "[Tactical Shotgun]" }, -- Armor removed
     },
     [94025855507158] = {
         buypadsPath = { "MAP", "Ignored", "Shop" },
-        allowedpads = { "[High-Medium Armor]", "[USP]", "[Tactical Shotgun]" },
+        allowedpads = { "[USP]", "[Tactical Shotgun]" }, -- Armor removed
     },
     [78790821242332] = {
         buypadsPath = { "MAP", "Shops" },
-        allowedpads = { "[High-Medium Armor]", "[Tactical Shotgun]", "[USP]" },
+        allowedpads = { "[Tactical Shotgun]", "[USP]" }, -- Armor removed
     },
     [75159825516372] = {
         buypadsPath = { "Workspace", "Map", "BuyPads" },
-        allowedpads = { "[USP]", "[Tactical Shotgun]", "[Double Barrel]", "[Revolver]", "[Silencer]", "[Medium Armor]", "[High Armor]" },
+        allowedpads = { "[USP]", "[Tactical Shotgun]", "[Double Barrel]", "[Revolver]", "[Silencer]" }, -- Armor removed
         botSupport = true,
         botFolder = "Bots",
     },
+    -- ADD YOUR GAME CONFIG HERE:
+    -- [123456789] = {
+    --     buypadsPath = { "Workspace", "BuyPads" },
+    --     allowedpads = { "[USP]", "[Shotgun]" },
+    --     botSupport = false,
+    -- },
 }
 
 local GunData = {
@@ -500,7 +536,7 @@ end
 
 local function UpdateBotCache()
     if not IsDaTrack() then return end
-    if not Shoomedaware.General.TargetBots then return end
+    if not Vice.General.TargetBots then return end
     
     local botsFolder = GetBotsFolder()
     if not botsFolder then return end
@@ -543,7 +579,7 @@ end))
 if LocalPlayer.Character then UpdateWallCheckFilter() end
 
 local function IsTargetVisible(target)
-    if not Shoomedaware.Checks.WallCheck then return true end
+    if not Vice.Checks.WallCheck then return true end
     if not target then return false end
     
     local char
@@ -599,7 +635,7 @@ end
 
 local function IsBehindWall(part)
     if not part then return true end
-    if not Shoomedaware.Checks.WallCheck then return false end
+    if not Vice.Checks.WallCheck then return false end
     
     local myChar = LocalPlayer.Character
     local myHead = myChar and myChar:FindFirstChild("Head")
@@ -626,7 +662,7 @@ local function IsBehindWall(part)
 end
 
 local function HasForceField(char)
-    if not Shoomedaware.Checks.ForceFieldCheck then return false end
+    if not Vice.Checks.ForceFieldCheck then return false end
     if not char then return false end
     if char:FindFirstChildOfClass("ForceField") then return true end
     if char:GetAttribute("ForceField") then return true end
@@ -637,7 +673,7 @@ local function HasForceField(char)
 end
 
 local function IsKnocked(char)
-    if not Shoomedaware.Checks.KnockCheck then return false end
+    if not Vice.Checks.KnockCheck then return false end
     if not char then return true end
     
     if IsBotCharacter(char) then
@@ -656,33 +692,21 @@ local function IsKnocked(char)
     return false
 end
 
-local function HasKatana(char)
-    if not Shoomedaware.Checks.KatanaCheck then return false end
-    if not char then return false end
-    for _, tool in ipairs(char:GetChildren()) do
-        if tool:IsA("Tool") then
-            local name = tool.Name:lower()
-            if name:find("katana") or name:find("knife") then
-                return true
-            end
-        end
-    end
-    return false
-end
+-- Katana check removed
 
 local function IsValidTarget(plr, forESP)
     if not plr then return false end
     
     if typeof(plr) == "Instance" and plr:IsA("Model") then
         if IsBotCharacter(plr) then
-            if not Shoomedaware.General.TargetBots then return false end
+            if not Vice.General.TargetBots then return false end
             if IsBotDead(plr) then return false end
             
             local hrp = plr:FindFirstChild("HumanoidRootPart")
             if not hrp then return false end
             
-            if Shoomedaware.Checks.ForceFieldCheck and HasForceField(plr) then return false end
-            if Shoomedaware.Checks.KatanaCheck and HasKatana(plr) then return false end
+            if Vice.Checks.ForceFieldCheck and HasForceField(plr) then return false end
+            -- Katana check removed
             
             return true
         end
@@ -700,10 +724,10 @@ local function IsValidTarget(plr, forESP)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
     
-    if Shoomedaware.Checks.ForceFieldCheck and HasForceField(char) then return false end
-    if Shoomedaware.Checks.KatanaCheck and HasKatana(char) then return false end
+    if Vice.Checks.ForceFieldCheck and HasForceField(char) then return false end
+    -- Katana check removed
     
-    if not forESP and Shoomedaware.Checks.KnockCheck then
+    if not forESP and Vice.Checks.KnockCheck then
         local knockedAttr = char:GetAttribute("Knocked")
         if knockedAttr == true then return false end
         
@@ -735,7 +759,7 @@ local function GetClosestPlayerToMouse()
                     continue
                 end
                 
-                if Shoomedaware.Checks.WallCheck and not IsTargetVisible(plr) then
+                if Vice.Checks.WallCheck and not IsTargetVisible(plr) then
                     continue
                 end
                 
@@ -755,7 +779,7 @@ local function GetClosestPlayerToMouse()
 end
 
 local function GetClosestBotToMouse()
-    if not Shoomedaware.General.TargetBots then return nil end
+    if not Vice.General.TargetBots then return nil end
     
     local closest, dist = nil, math.huge
     local mousePos = UserInputService:GetMouseLocation()
@@ -764,7 +788,7 @@ local function GetClosestBotToMouse()
         if botChar and botChar.Parent and not IsBotDead(botChar) then
             local hrp = botChar:FindFirstChild("HumanoidRootPart")
             if hrp then
-                if Shoomedaware.Checks.WallCheck and not IsTargetVisible(botChar) then
+                if Vice.Checks.WallCheck and not IsTargetVisible(botChar) then
                     continue
                 end
                 
@@ -803,7 +827,7 @@ local function GetTargetRootPart(target)
 end
 
 -- ============================================
--- AUTOBUY WITH RESPAWN CHECK
+-- AUTOBUY WITH RESPAWN CHECK (ARMOR REMOVED)
 -- ============================================
 
 local GameConfig = GameConfigs[game.PlaceId]
@@ -814,7 +838,7 @@ if GameConfig then
     for _, name in ipairs(GameConfig.buypadsPath) do
         BuyPads = BuyPads:WaitForChild(name, 5)
         if not BuyPads then 
-            warn("Shoomedaware: Could not find buypad path: " .. name)
+            warn("Vice.cc: Could not find buypad path: " .. name)
             break 
         end
     end
@@ -900,24 +924,7 @@ local function clickAllowedPads()
             end
         end
         
-        if cleanName:lower():find("armor") then
-            local function checkForArmor(container)
-                if not container then return false end
-                for _, item in ipairs(container:GetChildren()) do
-                    if item:IsA("Tool") then
-                        local itemClean = getCleanToolName(item.Name)
-                        if itemClean:find("armor") or itemClean:find("vest") then
-                            return true
-                        end
-                    end
-                end
-                return false
-            end
-            
-            if checkForArmor(backpack) or checkForArmor(char) then
-                shouldBuy = false
-            end
-        end
+        -- Armor check removed - only buys guns now
         
         if shouldBuy and not IsRespawning then
             local cd = pad:FindFirstChildWhichIsA("ClickDetector")
@@ -938,6 +945,12 @@ local function clickAllowedPads()
 end
 
 local function ToggleAutoBuy()
+    -- Check if initially allowed
+    if not InitialToggleStates.AutoBuy then
+        Notify("AutoBuy is disabled in config!")
+        return
+    end
+    
     AutoBuyEnabled = not AutoBuyEnabled
     Notify("AutoBuy: " .. (AutoBuyEnabled and "ON" or "OFF"))
     if AutoBuyEnabled and GameConfig then
@@ -968,9 +981,9 @@ local function UpdatePingHistory()
 end
 
 local function UpdateAutoPrediction()
-    if not Shoomedaware.SilentAim.AutoPrediction.Enabled then return end
+    if not Vice.SilentAim.AutoPrediction.Enabled then return end
     local currentTime = tick()
-    local cfg = Shoomedaware.SilentAim.AutoPrediction
+    local cfg = Vice.SilentAim.AutoPrediction
     if currentTime - AutoPredState.LastUpdate < cfg.Interval then return end
     AutoPredState.LastUpdate = currentTime
     UpdatePingHistory()
@@ -1000,7 +1013,7 @@ local function UpdateAutoPrediction()
         Z = AutoPredState.CurrentPrediction.Z + (newPred.Z - AutoPredState.CurrentPrediction.Z) * smoothing,
     }
     
-    Shoomedaware.SilentAim.Prediction = {
+    Vice.SilentAim.Prediction = {
         X = AutoPredState.CurrentPrediction.X,
         Y = AutoPredState.CurrentPrediction.Y,
         Z = AutoPredState.CurrentPrediction.Z,
@@ -1252,8 +1265,8 @@ if getrawmetatable then
             if self ~= CachedMouse then return old(self, k) end
             if k ~= "Hit" and k ~= "Target" then return old(self, k) end
             
-            local silentActive = Shoomedaware.SilentAim.Enabled or 
-                (Shoomedaware.General.TargetingMode == "Automatic" and Shoomedaware.AutoTargetActive)
+            local silentActive = Vice.SilentAim.Enabled or 
+                (Vice.General.TargetingMode == "Automatic" and Vice.AutoTargetActive)
             
             if not silentActive then return old(self, k) end
             if tick() - TargetAcquiredTime < TARGET_LOCK_IN_DELAY then return old(self, k) end
@@ -1261,7 +1274,7 @@ if getrawmetatable then
             local t = CurrentTarget or CurrentBotTarget
             if not t then return old(self, k) end
             
-            if not IsMouseInTargetFOV(t, Shoomedaware.SilentAim.FOV) then
+            if not IsMouseInTargetFOV(t, Vice.SilentAim.FOV) then
                 return old(self, k)
             end
             
@@ -1272,15 +1285,15 @@ if getrawmetatable then
             end
             
             if not IsValidTarget(t) then return old(self, k) end
-            if Shoomedaware.Checks.WallCheck and not IsTargetVisible(t) then return old(self, k) end
+            if Vice.Checks.WallCheck and not IsTargetVisible(t) then return old(self, k) end
             
             local char = GetTargetCharacter(t)
             if not char then return old(self, k) end
             
             local realPart, basePos
-            local isZeroPred = Shoomedaware.SilentAim.Prediction.X == 0 and 
-                              Shoomedaware.SilentAim.Prediction.Y == 0 and 
-                              Shoomedaware.SilentAim.Prediction.Z == 0
+            local isZeroPred = Vice.SilentAim.Prediction.X == 0 and 
+                              Vice.SilentAim.Prediction.Y == 0 and 
+                              Vice.SilentAim.Prediction.Z == 0
             
             if isZeroPred then
                 local closestData = GetSimpleClosestPoint(char)
@@ -1289,7 +1302,7 @@ if getrawmetatable then
                     basePos = closestData.Position
                 end
             else
-                local virtualPart, rp, pos, vel = GetHitPartDataUniversal(char, Shoomedaware.SilentAim)
+                local virtualPart, rp, pos, vel = GetHitPartDataUniversal(char, Vice.SilentAim)
                 realPart = rp
                 basePos = pos
             end
@@ -1297,16 +1310,16 @@ if getrawmetatable then
             if not realPart or not basePos then return old(self, k) end
             if IsBehindWall(realPart) then return old(self, k) end
             
-            local basePred = Shoomedaware.SilentAim.Prediction
+            local basePred = Vice.SilentAim.Prediction
             
-            if Shoomedaware.SilentAim.UseSeparateGunPredictions then
+            if Vice.SilentAim.UseSeparateGunPredictions then
                 local myChar = LocalPlayer.Character
                 if myChar then
                     local tool = myChar:FindFirstChildOfClass("Tool")
                     if tool then
                         local toolName = tool.Name:lower()
-                        local gunPred = Shoomedaware.SilentAim.GunPredictions[toolName] 
-                            or Shoomedaware.SilentAim.GunPredictions["Default"]
+                        local gunPred = Vice.SilentAim.GunPredictions[toolName] 
+                            or Vice.SilentAim.GunPredictions["Default"]
                         if gunPred then
                             basePred = gunPred
                         end
@@ -1321,7 +1334,7 @@ if getrawmetatable then
             end
             
             if not (basePred.X == 0 and basePred.Y == 0 and basePred.Z == 0) then
-                if Shoomedaware.SilentAim.HitChance < 100 and math.random(1, 100) > Shoomedaware.SilentAim.HitChance then
+                if Vice.SilentAim.HitChance < 100 and math.random(1, 100) > Vice.SilentAim.HitChance then
                     return old(self, k)
                 end
             end
@@ -1357,8 +1370,8 @@ pcall(function()
                 return OriginalRaycast(self, origin, direction, params)
             end
             
-            local silentActive = Shoomedaware.SilentAim.Enabled or 
-                (Shoomedaware.General.TargetingMode == "Automatic" and Shoomedaware.AutoTargetActive)
+            local silentActive = Vice.SilentAim.Enabled or 
+                (Vice.General.TargetingMode == "Automatic" and Vice.AutoTargetActive)
             
             if not silentActive then
                 return OriginalRaycast(self, origin, direction, params)
@@ -1394,14 +1407,14 @@ pcall(function()
             end
             
             local targetPart, basePos
-            local isZeroPred = Shoomedaware.SilentAim.Prediction.X == 0 and 
-                              Shoomedaware.SilentAim.Prediction.Y == 0 and 
-                              Shoomedaware.SilentAim.Prediction.Z == 0
+            local isZeroPred = Vice.SilentAim.Prediction.X == 0 and 
+                              Vice.SilentAim.Prediction.Y == 0 and 
+                              Vice.SilentAim.Prediction.Z == 0
             
             if isZeroPred then
                 targetPart, basePos = GetClosestPartForSilent(char)
             else
-                local virtualPart, rp, pos, vel = GetHitPartDataUniversal(char, Shoomedaware.SilentAim)
+                local virtualPart, rp, pos, vel = GetHitPartDataUniversal(char, Vice.SilentAim)
                 targetPart = rp
                 basePos = pos
             end
@@ -1413,7 +1426,7 @@ pcall(function()
             local newDirection = (basePos - origin).Unit * direction.Magnitude
             
             if not isZeroPred then
-                if Shoomedaware.SilentAim.HitChance < 100 and math.random(1, 100) > Shoomedaware.SilentAim.HitChance then
+                if Vice.SilentAim.HitChance < 100 and math.random(1, 100) > Vice.SilentAim.HitChance then
                     return OriginalRaycast(self, origin, direction, params)
                 end
             end
@@ -1450,8 +1463,8 @@ pcall(function()
             return OriginalFindPartOnRay(self, ray, ignoreList, terrainCellsAreCubes, ignoreWater)
         end
         
-        local silentActive = Shoomedaware.SilentAim.Enabled or 
-            (Shoomedaware.General.TargetingMode == "Automatic" and Shoomedaware.AutoTargetActive)
+        local silentActive = Vice.SilentAim.Enabled or 
+            (Vice.General.TargetingMode == "Automatic" and Vice.AutoTargetActive)
         
         if not silentActive then
             return OriginalFindPartOnRay(self, ray, ignoreList, terrainCellsAreCubes, ignoreWater)
@@ -1480,14 +1493,14 @@ pcall(function()
         end
         
         local targetPart, basePos
-        local isZeroPred = Shoomedaware.SilentAim.Prediction.X == 0 and 
-                          Shoomedaware.SilentAim.Prediction.Y == 0 and 
-                          Shoomedaware.SilentAim.Prediction.Z == 0
+        local isZeroPred = Vice.SilentAim.Prediction.X == 0 and 
+                          Vice.SilentAim.Prediction.Y == 0 and 
+                          Vice.SilentAim.Prediction.Z == 0
         
         if isZeroPred then
             targetPart, basePos = GetClosestPartForSilent(char)
         else
-            local _, rp, pos = GetHitPartDataUniversal(char, Shoomedaware.SilentAim)
+            local _, rp, pos = GetHitPartDataUniversal(char, Vice.SilentAim)
             targetPart = rp
             basePos = pos
         end
@@ -1499,7 +1512,7 @@ pcall(function()
         local newRay = Ray.new(origin, (basePos - origin).Unit * ray.Direction.Magnitude)
         
         if not isZeroPred then
-            if Shoomedaware.SilentAim.HitChance < 100 and math.random(1, 100) > Shoomedaware.SilentAim.HitChance then
+            if Vice.SilentAim.HitChance < 100 and math.random(1, 100) > Vice.SilentAim.HitChance then
                 return OriginalFindPartOnRay(self, ray, ignoreList, terrainCellsAreCubes, ignoreWater)
             end
         end
@@ -1516,8 +1529,8 @@ pcall(function()
             return OriginalFindPartOnRayWithIgnoreList(self, ray, ignoreList, terrainCellsAreCubes, ignoreWater, ignoreInvisible)
         end
         
-        local silentActive = Shoomedaware.SilentAim.Enabled or 
-            (Shoomedaware.General.TargetingMode == "Automatic" and Shoomedaware.AutoTargetActive)
+        local silentActive = Vice.SilentAim.Enabled or 
+            (Vice.General.TargetingMode == "Automatic" and Vice.AutoTargetActive)
         
         if not silentActive then
             return OriginalFindPartOnRayWithIgnoreList(self, ray, ignoreList, terrainCellsAreCubes, ignoreWater, ignoreInvisible)
@@ -1546,14 +1559,14 @@ pcall(function()
         end
         
         local targetPart, basePos
-        local isZeroPred = Shoomedaware.SilentAim.Prediction.X == 0 and 
-                          Shoomedaware.SilentAim.Prediction.Y == 0 and 
-                          Shoomedaware.SilentAim.Prediction.Z == 0
+        local isZeroPred = Vice.SilentAim.Prediction.X == 0 and 
+                          Vice.SilentAim.Prediction.Y == 0 and 
+                          Vice.SilentAim.Prediction.Z == 0
         
         if isZeroPred then
             targetPart, basePos = GetClosestPartForSilent(char)
         else
-            local _, rp, pos = GetHitPartDataUniversal(char, Shoomedaware.SilentAim)
+            local _, rp, pos = GetHitPartDataUniversal(char, Vice.SilentAim)
             targetPart = rp
             basePos = pos
         end
@@ -1565,7 +1578,7 @@ pcall(function()
         local newRay = Ray.new(origin, (basePos - origin).Unit * ray.Direction.Magnitude)
         
         if not isZeroPred then
-            if Shoomedaware.SilentAim.HitChance < 100 and math.random(1, 100) > Shoomedaware.SilentAim.HitChance then
+            if Vice.SilentAim.HitChance < 100 and math.random(1, 100) > Vice.SilentAim.HitChance then
                 return OriginalFindPartOnRayWithIgnoreList(self, ray, ignoreList, terrainCellsAreCubes, ignoreWater, ignoreInvisible)
             end
         end
@@ -1579,22 +1592,22 @@ end)
 -- ============================================
 
 AddConnection(RunService.Heartbeat:Connect(function()
-    local triggerToggle = (Shoomedaware.General.TriggerBotMode == "Toggle" and Shoomedaware.TriggerBot.Enabled) or 
-        (Shoomedaware.General.TriggerBotMode == "Hold" and HoldStates.TriggerBot)
-    local triggerAuto = Shoomedaware.General.TargetingMode == "Automatic" and Shoomedaware.AutoTargetActive
+    local triggerToggle = (Vice.General.TriggerBotMode == "Toggle" and Vice.TriggerBot.Enabled) or 
+        (Vice.General.TriggerBotMode == "Hold" and HoldStates.TriggerBot)
+    local triggerAuto = Vice.General.TargetingMode == "Automatic" and Vice.AutoTargetActive
     
     if not (triggerToggle or triggerAuto) then return end
     
     local target = CurrentTarget or CurrentBotTarget
     if not target or not IsValidTarget(target) then return end
     
-    if Shoomedaware.Checks.WallCheck and not IsTargetVisible(target) then return end
-    if not IsMouseInTargetFOV(target, Shoomedaware.TriggerBot.FOV) then return end
+    if Vice.Checks.WallCheck and not IsTargetVisible(target) then return end
+    if not IsMouseInTargetFOV(target, Vice.TriggerBot.FOV) then return end
     
     local char = GetTargetCharacter(target)
     if not char then return end
     
-    local virtualPart, realPart, position = GetHitPartDataUniversal(char, Shoomedaware.TriggerBot)
+    local virtualPart, realPart, position = GetHitPartDataUniversal(char, Vice.TriggerBot)
     if not virtualPart then return end
     if IsBehindWall(realPart or virtualPart) then return end
     
@@ -1604,7 +1617,7 @@ AddConnection(RunService.Heartbeat:Connect(function()
     if toolName:find("katana") or toolName:find("knife") then return end
     
     local now = tick()
-    local cooldownCfg = Shoomedaware.TriggerBot.Cooldown
+    local cooldownCfg = Vice.TriggerBot.Cooldown
     
     if cooldownCfg.Enabled then
         local cooldownTime = cooldownCfg.MinCooldown + (math.random() * (cooldownCfg.MaxCooldown - cooldownCfg.MinCooldown))
@@ -1644,7 +1657,7 @@ end
 local function GetAimPosition(char)
     if not char then return nil end
     
-    local hitPartSetting = Shoomedaware.AimAssist['Hit Part']
+    local hitPartSetting = Vice.AimAssist['Hit Part']
     
     if hitPartSetting == "Closest Point" then
         local data = GetSimpleClosestPoint(char)
@@ -1666,11 +1679,11 @@ local function GetAimPosition(char)
 end
 
 local function CalculateSmoothnessAlpha(dt, useDeathLock)
-    local smoothnessConfig = Shoomedaware.AimAssist.SmoothnessConfig or {}
+    local smoothnessConfig = Vice.AimAssist.SmoothnessConfig or {}
     local minSmooth = smoothnessConfig.MinValue or 0.001
     local maxSmooth = smoothnessConfig.MaxValue or 2.0
     
-    local userSmoothness = Shoomedaware.AimAssist.Smoothness or 0.75
+    local userSmoothness = Vice.AimAssist.Smoothness or 0.75
     local baseSmoothness = math.clamp(userSmoothness, minSmooth, maxSmooth)
     
     local smoothness = baseSmoothness
@@ -1681,7 +1694,7 @@ local function CalculateSmoothnessAlpha(dt, useDeathLock)
     end
     
     if not useDeathLock then
-        local legit = Shoomedaware.AimAssist.LegitFeatures
+        local legit = Vice.AimAssist.LegitFeatures
         if legit.Enabled and legit.SmoothnessRandomization.Enabled then
             local randMin = legit.SmoothnessRandomization.Min or 0.12
             local randMax = legit.SmoothnessRandomization.Max or 0.18
@@ -1725,9 +1738,9 @@ end
 AddConnection(RunService.RenderStepped:Connect(function(deltaTime)
     local dt = math.min(deltaTime, 0.1)
     
-    local aimToggle = (Shoomedaware.General.AimAssistMode == "Toggle" and Shoomedaware.AimAssist.Enabled) or 
-        (Shoomedaware.General.AimAssistMode == "Hold" and HoldStates.AimAssist)
-    local aimAuto = Shoomedaware.General.TargetingMode == "Automatic" and Shoomedaware.AutoTargetActive
+    local aimToggle = (Vice.General.AimAssistMode == "Toggle" and Vice.AimAssist.Enabled) or 
+        (Vice.General.AimAssistMode == "Hold" and HoldStates.AimAssist)
+    local aimAuto = Vice.General.TargetingMode == "Automatic" and Vice.AutoTargetActive
     
     if not (aimToggle or aimAuto) then 
         SmoothedVelocity = Vector3.new(0, 0, 0)
@@ -1742,7 +1755,7 @@ AddConnection(RunService.RenderStepped:Connect(function(deltaTime)
     local char = target and GetTargetCharacter(target)
     local isKnocked = char and IsActuallyKnocked(char)
     
-    if DeathLockPosition and (isKnocked or not char) and not Shoomedaware.Checks.KnockCheck then
+    if DeathLockPosition and (isKnocked or not char) and not Vice.Checks.KnockCheck then
         DeathLockActive = true
         local targetCFrame = CFrame.lookAt(Camera.CFrame.Position, DeathLockPosition)
         local alpha = CalculateSmoothnessAlpha(dt, true)
@@ -1766,19 +1779,19 @@ AddConnection(RunService.RenderStepped:Connect(function(deltaTime)
             return 
         end
         
-        if Shoomedaware.Checks.WallCheck and not IsTargetVisible(target) then 
+        if Vice.Checks.WallCheck and not IsTargetVisible(target) then 
             local pos = GetAimPosition(char)
             if pos then DeathLockPosition = pos end
             return 
         end
         
-        if not IsMouseInTargetFOV(target, Shoomedaware.AimAssist.FOV) then 
+        if not IsMouseInTargetFOV(target, Vice.AimAssist.FOV) then 
             local pos = GetAimPosition(char)
             if pos then DeathLockPosition = pos end
             return 
         end
         
-        local legit = Shoomedaware.AimAssist.LegitFeatures
+        local legit = Vice.AimAssist.LegitFeatures
         
         if legit.Enabled and legit.ReactionDelay.Enabled then
             local now = tick()
@@ -1801,22 +1814,24 @@ AddConnection(RunService.RenderStepped:Connect(function(deltaTime)
         local hrp = char:FindFirstChild("HumanoidRootPart")
         local velocity = hrp and hrp.Velocity or Vector3.new()
         
+        -- Fixed: Removed the Magnitude < 5 check that was preventing X (left/right) prediction
+        -- Now velocity is always used for prediction regardless of how small it is
         SmoothedVelocity = SmoothedVelocity:Lerp(velocity, 0.15)
         
+        -- Cap max velocity for stability but don't zero out small movements
         if SmoothedVelocity.Magnitude > 100 then
             SmoothedVelocity = SmoothedVelocity.Unit * 100
         end
         
-        if SmoothedVelocity.Magnitude < 5 then
-            SmoothedVelocity = Vector3.new(0, 0, 0)
-        end
+        -- REMOVED: if SmoothedVelocity.Magnitude < 5 then SmoothedVelocity = Vector3.new(0, 0, 0) end
+        -- This was preventing left/right (X axis) prediction when not jumping!
         
         local velMag = SmoothedVelocity.Magnitude
         local predMultiplier = 1 + (velMag / 200)
         local vectorPred = Vector3.new(
-            Shoomedaware.AimAssist.Prediction.X * predMultiplier,
-            Shoomedaware.AimAssist.Prediction.Y * predMultiplier * 1.2,
-            Shoomedaware.AimAssist.Prediction.Z * predMultiplier
+            Vice.AimAssist.Prediction.X * predMultiplier,
+            Vice.AimAssist.Prediction.Y * predMultiplier * 1.2,
+            Vice.AimAssist.Prediction.Z * predMultiplier
         )
         
         if LastTargetPosition then
@@ -1832,6 +1847,7 @@ AddConnection(RunService.RenderStepped:Connect(function(deltaTime)
         local stabilityMultiplier = math.min(AimStabilityFrames / 5, 1)
         vectorPred = vectorPred * stabilityMultiplier
         
+        -- This now properly predicts X (left/right), Y (up/down), and Z (forward/back)
         local predictedPos = currentPos + (SmoothedVelocity * vectorPred)
         
         if legit.Enabled and legit.Humanization.Enabled then
@@ -1861,19 +1877,19 @@ end))
 local ESPObjects = {}
 local BotESPObjects = {}
 
-_G.ShoomedawareESPObjects = ESPObjects
+_G.ViceESPObjects = ESPObjects
 
 local function CreateESPForBot(botChar)
     if BotESPObjects[botChar] then return end
     local objData = {}
     objData.Name = AddDrawing(Drawing.new("Text"))
-    objData.Name.Size = Shoomedaware.ESPSettings.TextSize or 20
+    objData.Name.Size = Vice.ESPSettings.TextSize or 20
     objData.Name.Center = true
     objData.Name.Outline = true
-    objData.Name.OutlineColor = Shoomedaware.ESPSettings.OutlineColor or Color3.fromRGB(0, 0, 0)
-    objData.Name.Color = Shoomedaware.ESPSettings.BotColor or Color3.fromRGB(255, 165, 0)
+    objData.Name.OutlineColor = Vice.ESPSettings.OutlineColor or Color3.fromRGB(0, 0, 0)
+    objData.Name.Color = Vice.ESPSettings.BotColor or Color3.fromRGB(255, 165, 0)
     objData.Name.Visible = false
-    objData.Name.Font = Shoomedaware.ESPSettings.Font or 3
+    objData.Name.Font = Vice.ESPSettings.Font or 3
     BotESPObjects[botChar] = objData
 end
 
@@ -1882,13 +1898,13 @@ local function CreateESP(plr)
     if ESPObjects[plr] then return end
     local objData = {}
     objData.Name = AddDrawing(Drawing.new("Text"))
-    objData.Name.Size = Shoomedaware.ESPSettings.TextSize or 20
+    objData.Name.Size = Vice.ESPSettings.TextSize or 20
     objData.Name.Center = true
     objData.Name.Outline = true
-    objData.Name.OutlineColor = Shoomedaware.ESPSettings.OutlineColor or Color3.fromRGB(0, 0, 0)
-    objData.Name.Color = Shoomedaware.ESPSettings.NormalColor or Color3.fromRGB(255, 255, 255)
+    objData.Name.OutlineColor = Vice.ESPSettings.OutlineColor or Color3.fromRGB(0, 0, 0)
+    objData.Name.Color = Vice.ESPSettings.NormalColor or Color3.fromRGB(255, 255, 255)
     objData.Name.Visible = false
-    objData.Name.Font = Shoomedaware.ESPSettings.Font or 3
+    objData.Name.Font = Vice.ESPSettings.Font or 3
     ESPObjects[plr] = objData
     
     local leaveConn
@@ -1905,20 +1921,20 @@ local function CreateESP(plr)
 end
 
 local SilentFOVBox = AddDrawing(Drawing.new("Square"))
-SilentFOVBox.Thickness = Shoomedaware.SilentAim.FOV.BoxThickness
-SilentFOVBox.Color = Shoomedaware.SilentAim.FOV.BoxColor
+SilentFOVBox.Thickness = Vice.SilentAim.FOV.BoxThickness
+SilentFOVBox.Color = Vice.SilentAim.FOV.BoxColor
 SilentFOVBox.Filled = false
 SilentFOVBox.Visible = false
 
 local AimAssistFOVBox = AddDrawing(Drawing.new("Square"))
-AimAssistFOVBox.Thickness = Shoomedaware.AimAssist.FOV.BoxThickness
-AimAssistFOVBox.Color = Shoomedaware.AimAssist.FOV.BoxColor
+AimAssistFOVBox.Thickness = Vice.AimAssist.FOV.BoxThickness
+AimAssistFOVBox.Color = Vice.AimAssist.FOV.BoxColor
 AimAssistFOVBox.Filled = false
 AimAssistFOVBox.Visible = false
 
 local TriggerFOVBox = AddDrawing(Drawing.new("Square"))
-TriggerFOVBox.Thickness = Shoomedaware.TriggerBot.FOV.BoxThickness
-TriggerFOVBox.Color = Shoomedaware.TriggerBot.FOV.BoxColor
+TriggerFOVBox.Thickness = Vice.TriggerBot.FOV.BoxThickness
+TriggerFOVBox.Color = Vice.TriggerBot.FOV.BoxColor
 TriggerFOVBox.Filled = false
 TriggerFOVBox.Visible = false
 
@@ -1927,7 +1943,7 @@ AddConnection(RunService.RenderStepped:Connect(function()
         UpdateBotCache()
     end
     
-    if not Shoomedaware.ESPSettings.Enabled then
+    if not Vice.ESPSettings.Enabled then
         for _, objData in pairs(ESPObjects) do
             if objData.Name then objData.Name.Visible = false end
         end
@@ -1960,15 +1976,15 @@ AddConnection(RunService.RenderStepped:Connect(function()
                 continue
             end
             
-            local displayName = Shoomedaware.ESPSettings.ShowDisplayName and plr.DisplayName or plr.Name
+            local displayName = Vice.ESPSettings.ShowDisplayName and plr.DisplayName or plr.Name
             objData.Name.Text = displayName
-            objData.Name.Color = (CurrentTarget == plr) and Shoomedaware.ESPSettings.TargetColor or Shoomedaware.ESPSettings.NormalColor
-            objData.Name.Position = Vector2.new(screenPos.X, screenPos.Y + (Shoomedaware.ESPSettings.OffsetY or -40))
-            objData.Name.Size = Shoomedaware.ESPSettings.TextSize or 20
+            objData.Name.Color = (CurrentTarget == plr) and Vice.ESPSettings.TargetColor or Vice.ESPSettings.NormalColor
+            objData.Name.Position = Vector2.new(screenPos.X, screenPos.Y + (Vice.ESPSettings.OffsetY or -40))
+            objData.Name.Size = Vice.ESPSettings.TextSize or 20
             objData.Name.Visible = true
         end
         
-        if Shoomedaware.General.TargetBots then
+        if Vice.General.TargetBots then
             for botChar, botData in pairs(BotCache) do
                 if not botChar or not botChar.Parent then 
                     if BotESPObjects[botChar] then
@@ -2003,8 +2019,8 @@ AddConnection(RunService.RenderStepped:Connect(function()
                 end
                 
                 objData.Name.Text = botData.Name or "Bot"
-                objData.Name.Color = (CurrentBotTarget == botChar) and Shoomedaware.ESPSettings.TargetColor or Shoomedaware.ESPSettings.BotColor
-                objData.Name.Position = Vector2.new(screenPos.X, screenPos.Y + (Shoomedaware.ESPSettings.OffsetY or -40))
+                objData.Name.Color = (CurrentBotTarget == botChar) and Vice.ESPSettings.TargetColor or Vice.ESPSettings.BotColor
+                objData.Name.Position = Vector2.new(screenPos.X, screenPos.Y + (Vice.ESPSettings.OffsetY or -40))
                 objData.Name.Visible = true
             end
         end
@@ -2016,8 +2032,8 @@ AddConnection(RunService.RenderStepped:Connect(function()
         if hrp then
             local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
             if onScreen then
-                if Shoomedaware.SilentAim.FOV.Visible then
-                    local cfg = Shoomedaware.SilentAim.FOV["2D"]
+                if Vice.SilentAim.FOV.Visible then
+                    local cfg = Vice.SilentAim.FOV["2D"]
                     SilentFOVBox.Size = Vector2.new(cfg.X * 2, cfg.Y * 2)
                     SilentFOVBox.Position = Vector2.new(screenPos.X - cfg.X, screenPos.Y - cfg.Y)
                     SilentFOVBox.Visible = true
@@ -2025,8 +2041,8 @@ AddConnection(RunService.RenderStepped:Connect(function()
                     SilentFOVBox.Visible = false
                 end
                 
-                if Shoomedaware.AimAssist.FOV.Visible then
-                    local cfg = Shoomedaware.AimAssist.FOV["2D"]
+                if Vice.AimAssist.FOV.Visible then
+                    local cfg = Vice.AimAssist.FOV["2D"]
                     AimAssistFOVBox.Size = Vector2.new(cfg.X * 2, cfg.Y * 2)
                     AimAssistFOVBox.Position = Vector2.new(screenPos.X - cfg.X, screenPos.Y - cfg.Y)
                     AimAssistFOVBox.Visible = true
@@ -2034,8 +2050,8 @@ AddConnection(RunService.RenderStepped:Connect(function()
                     AimAssistFOVBox.Visible = false
                 end
                 
-                if Shoomedaware.TriggerBot.FOV.Visible then
-                    local cfg = Shoomedaware.TriggerBot.FOV["2D"]
+                if Vice.TriggerBot.FOV.Visible then
+                    local cfg = Vice.TriggerBot.FOV["2D"]
                     TriggerFOVBox.Size = Vector2.new(cfg.X * 2, cfg.Y * 2)
                     TriggerFOVBox.Position = Vector2.new(screenPos.X - cfg.X, screenPos.Y - cfg.Y)
                     TriggerFOVBox.Visible = true
@@ -2076,10 +2092,10 @@ end))
 -- ============================================
 
 local InfoObjects = {}
-_G.ShoomedawareInfoObjects = InfoObjects
+_G.ViceInfoObjects = InfoObjects
 
 local function CreateInfoPanel()
-    if not Shoomedaware.Hotkeys.Info.Enabled then return end
+    if not Vice.Hotkeys.Info.Enabled then return end
     if InfoObjects.Header then pcall(function() InfoObjects.Header:Remove() end) end
     if InfoObjects.Lines then
         for _, lineObj in pairs(InfoObjects.Lines) do
@@ -2089,15 +2105,15 @@ local function CreateInfoPanel()
     InfoObjects.Lines = {}
     
     local screenSize = Camera.ViewportSize
-    local pos = Shoomedaware.Hotkeys.Info.Position
+    local pos = Vice.Hotkeys.Info.Position
     local header = AddDrawing(Drawing.new("Text"))
     header.Size = 18
     header.Center = false
     header.Outline = true
-    header.Color = Shoomedaware.Hotkeys.Info.Colors.ShoomedawareColor
+    header.Color = Vice.Hotkeys.Info.Colors.ViceColor
     header.Position = Vector2.new(screenSize.X * pos.X + 10, screenSize.Y * pos.Y + 5)
     header.Visible = true
-    header.Text = "Holo.cc"
+    header.Text = "Vice.cc"
     InfoObjects.Header = header
     InfoObjects.BaseY = screenSize.Y * pos.Y + 30
     InfoObjects.XPos = screenSize.X * pos.X + 10
@@ -2108,7 +2124,7 @@ AddConnection(RunService.RenderStepped:Connect(function()
     if tick() - LastInfoUpdate < 0.1 then return end
     LastInfoUpdate = tick()
     
-    if not Shoomedaware.Hotkeys.Info.Enabled then
+    if not Vice.Hotkeys.Info.Enabled then
         if InfoObjects.Header then InfoObjects.Header.Visible = false end
         if InfoObjects.Lines then
             for _, line in pairs(InfoObjects.Lines) do
@@ -2122,17 +2138,17 @@ AddConnection(RunService.RenderStepped:Connect(function()
     InfoObjects.Header.Visible = true
     
     local lines = {}
-    local redColor = Shoomedaware.Hotkeys.Info.Colors.ToggledOnColor
-    local defaultColor = Shoomedaware.Hotkeys.Info.Colors.Color
+    local redColor = Vice.Hotkeys.Info.Colors.ToggledOnColor
+    local defaultColor = Vice.Hotkeys.Info.Colors.Color
     
-    table.insert(lines, { text = "[Mode: " .. Shoomedaware.General.TargetingMode .. (Shoomedaware.AutoTargetActive and " | AUTO" or "") .. "]", color = defaultColor })
+    table.insert(lines, { text = "[Mode: " .. Vice.General.TargetingMode .. (Vice.AutoTargetActive and " | AUTO" or "") .. "]", color = defaultColor })
     
     if IsDaTrack() then
         table.insert(lines, { text = "[Bot Mode: ON]", color = redColor })
     end
     
-    if Shoomedaware.SilentAim.Enabled then
-        table.insert(lines, { text = "[" .. (Shoomedaware.SilentAim.PredictionSystem or "Standard") .. "]", color = defaultColor })
+    if Vice.SilentAim.Enabled then
+        table.insert(lines, { text = "[" .. (Vice.SilentAim.PredictionSystem or "Standard") .. "]", color = defaultColor })
     end
     
     local activeTarget = CurrentTarget or CurrentBotTarget
@@ -2143,22 +2159,22 @@ AddConnection(RunService.RenderStepped:Connect(function()
         else
             targetName = activeTarget.Name
         end
-        table.insert(lines, { text = "Target: " .. targetName, color = Shoomedaware.Hotkeys.Info.Colors.TargetColor })
+        table.insert(lines, { text = "Target: " .. targetName, color = Vice.Hotkeys.Info.Colors.TargetColor })
     end
     
-    if Shoomedaware.SilentAim.Enabled then
+    if Vice.SilentAim.Enabled then
         table.insert(lines, { text = "[" .. GetBind("SilentAimToggle") .. "] Silent Aim: ON", color = redColor })
     end
-    if (Shoomedaware.General.AimAssistMode == "Toggle" and Shoomedaware.AimAssist.Enabled) or (Shoomedaware.General.AimAssistMode == "Hold" and HoldStates.AimAssist) then
+    if (Vice.General.AimAssistMode == "Toggle" and Vice.AimAssist.Enabled) or (Vice.General.AimAssistMode == "Hold" and HoldStates.AimAssist) then
         table.insert(lines, { text = "[" .. GetBind("AimAssistToggle") .. "] Aim Assist: ON", color = redColor })
     end
-    if (Shoomedaware.General.TriggerBotMode == "Toggle" and Shoomedaware.TriggerBot.Enabled) or (Shoomedaware.General.TriggerBotMode == "Hold" and HoldStates.TriggerBot) then
+    if (Vice.General.TriggerBotMode == "Toggle" and Vice.TriggerBot.Enabled) or (Vice.General.TriggerBotMode == "Hold" and HoldStates.TriggerBot) then
         table.insert(lines, { text = "[" .. GetBind("TriggerBotToggle") .. "] Trigger Bot: ON", color = redColor })
     end
     if AutoBuyEnabled then
         table.insert(lines, { text = "[" .. GetBind("AutoBuyToggle") .. "] AutoBuy: ON", color = redColor })
     end
-    if Shoomedaware.ESPSettings.Enabled then
+    if Vice.ESPSettings.Enabled then
         table.insert(lines, { text = "[" .. GetBind("ESP") .. "] ESP: ON", color = redColor })
     end
     
@@ -2193,7 +2209,7 @@ local LastBotDeathPosition = nil
 local WasTargetingBot = false
 
 local function AcquireTarget()
-    if Shoomedaware.General.TargetingMode == "Automatic" then return end
+    if Vice.General.TargetingMode == "Automatic" then return end
     
     local newTarget = GetClosestPlayerToMouse()
     if newTarget then
@@ -2204,7 +2220,7 @@ local function AcquireTarget()
         return true
     end
     
-    if Shoomedaware.General.TargetBots then
+    if Vice.General.TargetBots then
         local newBot = GetClosestBotToMouse()
         if newBot then
             CurrentTarget = nil
@@ -2232,7 +2248,7 @@ AddConnection(RunService.RenderStepped:Connect(function()
             WasTargetingBot = false
         elseif IsBotDead(CurrentBotTarget) then
             local char = CurrentBotTarget
-            local hitPartSetting = Shoomedaware.AimAssist['Hit Part']
+            local hitPartSetting = Vice.AimAssist['Hit Part']
             local deathPos = nil
             
             if hitPartSetting == "Closest Point" then
@@ -2251,7 +2267,7 @@ AddConnection(RunService.RenderStepped:Connect(function()
                 DeathLockPosition = deathPos
             end
             
-            if Shoomedaware.Checks.KnockCheck then
+            if Vice.Checks.KnockCheck then
                 CurrentBotTarget = nil
                 WasTargetingBot = false
             end
@@ -2260,12 +2276,12 @@ AddConnection(RunService.RenderStepped:Connect(function()
     
     if CurrentTarget and not IsValidTarget(CurrentTarget) then
         CurrentTarget = nil
-        if Shoomedaware.General.TargetingMode == "Automatic" then
-            Shoomedaware.AutoTargetActive = false
+        if Vice.General.TargetingMode == "Automatic" then
+            Vice.AutoTargetActive = false
         end
     end
     
-    if Shoomedaware.General.TargetingMode == "Automatic" then
+    if Vice.General.TargetingMode == "Automatic" then
         local closestPlayer = nil
         local closestBot = nil
         local playerDist, botDist = math.huge, math.huge
@@ -2290,7 +2306,7 @@ AddConnection(RunService.RenderStepped:Connect(function()
             end
         end
         
-        if Shoomedaware.General.TargetBots then
+        if Vice.General.TargetBots then
             for botChar, _ in pairs(BotCache) do
                 if botChar and botChar.Parent and not IsBotDead(botChar) then
                     local hrp = botChar:FindFirstChild("HumanoidRootPart")
@@ -2332,30 +2348,30 @@ AddConnection(RunService.RenderStepped:Connect(function()
             WasTargetingBot = false
         end
         
-        Shoomedaware.AutoTargetActive = (CurrentTarget ~= nil or CurrentBotTarget ~= nil)
+        Vice.AutoTargetActive = (CurrentTarget ~= nil or CurrentBotTarget ~= nil)
     else
-        local aimActive = (Shoomedaware.General.AimAssistMode == "Toggle" and Shoomedaware.AimAssist.Enabled) or 
-            (Shoomedaware.General.AimAssistMode == "Hold" and HoldStates.AimAssist)
-        local triggerActive = (Shoomedaware.General.TriggerBotMode == "Toggle" and Shoomedaware.TriggerBot.Enabled) or 
-            (Shoomedaware.General.TriggerBotMode == "Hold" and HoldStates.TriggerBot)
-        local silentActive = Shoomedaware.SilentAim.Enabled
+        local aimActive = (Vice.General.AimAssistMode == "Toggle" and Vice.AimAssist.Enabled) or 
+            (Vice.General.AimAssistMode == "Hold" and HoldStates.AimAssist)
+        local triggerActive = (Vice.General.TriggerBotMode == "Toggle" and Vice.TriggerBot.Enabled) or 
+            (Vice.General.TriggerBotMode == "Hold" and HoldStates.TriggerBot)
+        local silentActive = Vice.SilentAim.Enabled
         
         if not (silentActive or aimActive or triggerActive) then
             CurrentTarget = nil
             CurrentBotTarget = nil
-            Shoomedaware.AcquireNewTarget = false
+            Vice.AcquireNewTarget = false
             WasTargetingBot = false
         elseif not CurrentTarget and not CurrentBotTarget then
-            if Shoomedaware.AcquireNewTarget then
+            if Vice.AcquireNewTarget then
                 AcquireTarget()
-                Shoomedaware.AcquireNewTarget = false
+                Vice.AcquireNewTarget = false
             end
         end
     end
 end))
 
 -- ============================================
--- INPUT HANDLING
+-- INPUT HANDLING (FIXED TOGGLE LOGIC)
 -- ============================================
 
 AddConnection(UserInputService.InputBegan:Connect(function(input, gp)
@@ -2372,28 +2388,39 @@ AddConnection(UserInputService.InputBegan:Connect(function(input, gp)
     
     if kc == "" then return end
     
-    for feature, key in pairs(Shoomedaware.General.Binds) do
+    for feature, key in pairs(Vice.General.Binds) do
         if tostring(key):upper() == kc then
             if feature == "ESP" then
-                Shoomedaware.ESPSettings.Enabled = not Shoomedaware.ESPSettings.Enabled
+                -- Check if initially enabled in config
+                if not InitialToggleStates.ESP then
+                    Notify("ESP is disabled in config!")
+                    return
+                end
+                Vice.ESPSettings.Enabled = not Vice.ESPSettings.Enabled
                 
             elseif feature == "SilentAimToggle" then
-                if Shoomedaware.RequireManualRetoggle then
-                    Shoomedaware.RequireManualRetoggle = false
+                -- Check if initially enabled in config
+                if not InitialToggleStates.SilentAim then
+                    Notify("Silent Aim is disabled in config!")
+                    return
                 end
                 
-                if Shoomedaware.General.TargetingMode == "Automatic" then
-                    Shoomedaware.AutoTargetActive = not Shoomedaware.AutoTargetActive
-                    if not Shoomedaware.AutoTargetActive then 
+                if Vice.RequireManualRetoggle then
+                    Vice.RequireManualRetoggle = false
+                end
+                
+                if Vice.General.TargetingMode == "Automatic" then
+                    Vice.AutoTargetActive = not Vice.AutoTargetActive
+                    if not Vice.AutoTargetActive then 
                         CurrentTarget = nil 
                         CurrentBotTarget = nil
                     end
-                    Notify("Auto-Target: " .. (Shoomedaware.AutoTargetActive and "ON" or "OFF"))
+                    Notify("Auto-Target: " .. (Vice.AutoTargetActive and "ON" or "OFF"))
                 else
-                    Shoomedaware.SilentAim.Enabled = not Shoomedaware.SilentAim.Enabled
+                    Vice.SilentAim.Enabled = not Vice.SilentAim.Enabled
                     
-                    if Shoomedaware.SilentAim.Enabled then 
-                        Shoomedaware.AcquireNewTarget = true 
+                    if Vice.SilentAim.Enabled then 
+                        Vice.AcquireNewTarget = true 
                         task.spawn(function()
                             task.wait(0.05)
                             if not CurrentTarget and not CurrentBotTarget then
@@ -2404,18 +2431,24 @@ AddConnection(UserInputService.InputBegan:Connect(function(input, gp)
                 end
                 
             elseif feature == "AimAssistToggle" then
-                if Shoomedaware.RequireManualRetoggle then
-                    Shoomedaware.RequireManualRetoggle = false
+                -- Check if initially enabled in config
+                if not InitialToggleStates.AimAssist then
+                    Notify("Aim Assist is disabled in config!")
+                    return
                 end
                 
-                if Shoomedaware.General.AimAssistMode == "Hold" then
+                if Vice.RequireManualRetoggle then
+                    Vice.RequireManualRetoggle = false
+                end
+                
+                if Vice.General.AimAssistMode == "Hold" then
                     HoldStates.AimAssist = true
                     AcquireTarget()
                 else
-                    Shoomedaware.AimAssist.Enabled = not Shoomedaware.AimAssist.Enabled
+                    Vice.AimAssist.Enabled = not Vice.AimAssist.Enabled
                     
-                    if Shoomedaware.AimAssist.Enabled then 
-                        Shoomedaware.AcquireNewTarget = true 
+                    if Vice.AimAssist.Enabled then 
+                        Vice.AcquireNewTarget = true 
                         task.spawn(function()
                             task.wait(0.05)
                             if not CurrentTarget and not CurrentBotTarget then
@@ -2426,18 +2459,24 @@ AddConnection(UserInputService.InputBegan:Connect(function(input, gp)
                 end
                 
             elseif feature == "TriggerBotToggle" then
-                if Shoomedaware.RequireManualRetoggle then
-                    Shoomedaware.RequireManualRetoggle = false
+                -- Check if initially enabled in config
+                if not InitialToggleStates.TriggerBot then
+                    Notify("Trigger Bot is disabled in config!")
+                    return
                 end
                 
-                if Shoomedaware.General.TriggerBotMode == "Hold" then
+                if Vice.RequireManualRetoggle then
+                    Vice.RequireManualRetoggle = false
+                end
+                
+                if Vice.General.TriggerBotMode == "Hold" then
                     HoldStates.TriggerBot = true
                     AcquireTarget()
                 else
-                    Shoomedaware.TriggerBot.Enabled = not Shoomedaware.TriggerBot.Enabled
+                    Vice.TriggerBot.Enabled = not Vice.TriggerBot.Enabled
                     
-                    if Shoomedaware.TriggerBot.Enabled then 
-                        Shoomedaware.AcquireNewTarget = true 
+                    if Vice.TriggerBot.Enabled then 
+                        Vice.AcquireNewTarget = true 
                         task.spawn(function()
                             task.wait(0.05)
                             if not CurrentTarget and not CurrentBotTarget then
@@ -2468,12 +2507,18 @@ AddConnection(UserInputService.InputEnded:Connect(function(input, gp)
     
     if kc == "" then return end
     
-    for feature, key in pairs(Shoomedaware.General.Binds) do
+    for feature, key in pairs(Vice.General.Binds) do
         if tostring(key):upper() == kc then
-            if feature == "AimAssistToggle" and Shoomedaware.General.AimAssistMode == "Hold" then
-                HoldStates.AimAssist = false
-            elseif feature == "TriggerBotToggle" and Shoomedaware.General.TriggerBotMode == "Hold" then
-                HoldStates.TriggerBot = false
+            if feature == "AimAssistToggle" and Vice.General.AimAssistMode == "Hold" then
+                -- Only disable if initially allowed
+                if InitialToggleStates.AimAssist then
+                    HoldStates.AimAssist = false
+                end
+            elseif feature == "TriggerBotToggle" and Vice.General.TriggerBotMode == "Hold" then
+                -- Only disable if initially allowed
+                if InitialToggleStates.TriggerBot then
+                    HoldStates.TriggerBot = false
+                end
             end
         end
     end
@@ -2484,7 +2529,7 @@ end))
 -- ============================================
 
 task.spawn(function()
-    while _G.ShoomedawareActive do
+    while _G.ViceActive do
         if AutoBuyEnabled and GameConfig and not IsRespawning then
             clickAllowedPads()
         end
@@ -2493,31 +2538,31 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    while _G.ShoomedawareActive do
-        if IsDaTrack() and Shoomedaware.General.TargetBots then
+    while _G.ViceActive do
+        if IsDaTrack() and Vice.General.TargetBots then
             UpdateBotCache()
         end
         task.wait(0.5)
     end
 end)
 
-if Shoomedaware.ModDetector and Shoomedaware.ModDetector.Enabled then
+if Vice.ModDetector and Vice.ModDetector.Enabled then
     task.spawn(function()
-        while _G.ShoomedawareActive do
+        while _G.ViceActive do
             for _, plr in ipairs(Players:GetPlayers()) do
                 if plr ~= LocalPlayer then
                     local isMod = false
-                    if Shoomedaware.ModDetector.GroupId then
+                    if Vice.ModDetector.GroupId then
                         local success, inGroup = pcall(function()
-                            return plr:IsInGroup(Shoomedaware.ModDetector.GroupId)
+                            return plr:IsInGroup(Vice.ModDetector.GroupId)
                         end)
                         if success and inGroup then
                             isMod = true
                         end
                     end
                     
-                    if not isMod and Shoomedaware.ModDetector.UserIds then
-                        for _, id in ipairs(Shoomedaware.ModDetector.UserIds) do
+                    if not isMod and Vice.ModDetector.UserIds then
+                        for _, id in ipairs(Vice.ModDetector.UserIds) do
                             if plr.UserId == id then
                                 isMod = true
                                 break
@@ -2527,7 +2572,7 @@ if Shoomedaware.ModDetector and Shoomedaware.ModDetector.Enabled then
                     
                     if isMod then
                         Notify("MOD DETECTED: " .. plr.Name)
-                        if Shoomedaware.ModDetector.KickOnMod then
+                        if Vice.ModDetector.KickOnMod then
                             LocalPlayer:Kick("Mod detected: " .. plr.Name)
                             return
                         end
@@ -2540,18 +2585,20 @@ if Shoomedaware.ModDetector and Shoomedaware.ModDetector.Enabled then
 end
 
 -- Mark as loaded
-_G.ShoomedawareLoaded = true
+_G.ViceLoaded = true
 
-print("✅ Shoomedaware Loaded!")
+print("✅ Vice.cc Loaded!")
 print("   Re-Execute: SUPPORTED (cleans old instance)")
 print("   External config: ACTIVE on every execute")
 print("   Hold Mode: FIXED")
-print("   AutoBuy: CONTINUOUS")
+print("   AutoBuy: CONTINUOUS (NO ARMOR)")
 print("   Closest Point: ALL RIG PARTS")
 print("   0 Pred: ULTRA AGGRESSIVE")
 print("   Bot Knock Check: FIXED")
+print("   X Prediction: FIXED (Left/Right)")
+print("   Toggle Logic: Only works if Enabled in config")
 if IsDaTrack() then
     print("   Bot Mode: Active for Da Track")
 end
 
-return Shoomedaware
+return Vice
